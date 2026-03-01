@@ -87,6 +87,30 @@ io.on('connection', (socket) => {
         socket.emit('receive_history', rooms[roomId].history);
     });
 
+    socket.on('request_hint', async ({ roomId, player }) => {
+        if (!rooms[roomId]) return;
+        try {
+            const target = rooms[roomId].targetWord;
+            // Звертаємося до ендпоінту get_hint у Python
+            const response = await axios.get(`${BRAIN_BASE_URL}/get_hint/${target.toLowerCase()}`);
+            
+            const hintAttempt = {
+                player: "SYSTEM_DECODER", // Позначаємо, що це підказка
+                word: response.data.word,
+                rank: response.data.rank,
+                timestamp: Date.now()
+            };
+
+            // Додаємо в історію та розсилаємо всім
+            rooms[roomId].history.push(hintAttempt);
+            io.to(roomId).emit('receive_guess', hintAttempt);
+            
+            console.log(`Підказка видана для кімнати ${roomId}: ${hintAttempt.word}`);
+        } catch (error) {
+            console.error("Помилка отримання підказки:", error.message);
+        }
+    });
+
     socket.on('send_guess', async ({ word, player, roomId }) => {
         if (!rooms[roomId]) return;
 

@@ -27,6 +27,13 @@ const GameBoard = ({ socket, user, onLogout }) => {
         }
     }, [attempts, lastWord]); // Спрацьовує, коли змінюється список або останнє слово
 
+    // Функція запиту підказки
+    const handleRequestHint = () => {
+        if (window.confirm("Використати системний дешифратор для підказки?")) {
+            socket.emit('request_hint', { roomId: user.roomId, player: user.username });
+        }
+    };
+
     useEffect(() => {
         socket.on('player_joined', (updatedPlayers) => setPlayers(updatedPlayers));
         
@@ -42,6 +49,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
     });
 
     socket.on('receive_guess', (newAttempt) => {
+        console.log("Отримано нову спробу/підказку:", newAttempt);
         setLastWord(newAttempt.word);
         
         // Встановлюємо, хто саме вистрілив кодом
@@ -149,30 +157,52 @@ const GameBoard = ({ socket, user, onLogout }) => {
       
         {/* HEADER */}
         <div className="border-b border-zinc-900 pb-4 mb-6 flex justify-between items-end">
-            <div className="text-right text-[10px] text-zinc-500 grid justify-start uppercase tracking-widest">
-                <div className="text-[10px] text-zinc-500 leading-relaxed uppercase tracking-[0.2em]">
+            
+            {/* LEFT: Room ID & Leave */}
+            <div className="flex flex-col gap-2">
+                <div className="text-[10px] text-zinc-500 uppercase tracking-[0.2em]">
                     Room_ID: <span className="text-white">{user.roomId}</span>
                 </div>
                 <button 
                     onClick={handleLeave}
-                    className="text-[9px] border border-zinc-800 px-2 py-1 text-zinc-600 hover:text-red-500 hover:border-red-900 transition-colors uppercase tracking-widest"
+                    className="text-[9px] border border-zinc-800 px-2 py-1 text-zinc-600 hover:text-red-500 hover:border-red-900 transition-colors uppercase tracking-widest text-left w-fit"
                 >
-                    [ Leave ]
+                    [ Leave_Session ]
                 </button>
             </div>
 
-            <div className="text-3xl font-light tracking-[0.5em] flex justify-center items-center gap-6">
-                <span className="text-zinc-800 font-black">[{attempts.length}]</span>
-                <motion.span 
-                    key={lastWord}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-zinc-200"
-                >
-                    {lastWord}
-                </motion.span>
+            {/* CENTER: Counter & Word & SYSTEM BUTTONS */}
+            <div className="flex flex-col items-center gap-4">
+                <div className="flex items-center gap-6">
+                    <span className="text-zinc-800 font-black text-3xl">[{attempts.length}]</span>
+                    <motion.span 
+                        key={lastWord}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-zinc-200 text-3xl font-light tracking-[0.5em]"
+                    >
+                        {lastWord}
+                    </motion.span>
+                </div>
+
+                {/* NEW SYSTEM BUTTONS */}
+                <div className="flex gap-4">
+                    <button 
+                        onClick={handleRequestHint}
+                        className="text-[9px] border border-blue-900/50 px-3 py-1 text-blue-500/70 hover:text-blue-400 hover:border-blue-500 transition-all uppercase tracking-widest"
+                    >
+                        {'>'} Decipher_Hint
+                    </button>
+                    <button 
+                        onClick={handleRestart}
+                        className="text-[9px] border border-green-900/50 px-3 py-1 text-green-500/70 hover:text-green-400 hover:border-green-500 transition-all uppercase tracking-widest"
+                    >
+                        {'>'} Reboot_Level
+                    </button>
+                </div>
             </div>
 
+            {/* RIGHT: Players count */}
             <div className="text-right text-[10px] text-zinc-500 uppercase tracking-widest">
                 Players: <span className="text-white">{players.length} / 3</span>
             </div>
@@ -205,12 +235,18 @@ const GameBoard = ({ socket, user, onLogout }) => {
                 exit={{ opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 className={`bg-zinc-900/40 border p-2 font-mono relative transition-colors duration-500 ${
-                  att.word === lastWord ? "border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.2)]" : "border-zinc-800"
+                att.player === "SYSTEM_DECODER" 
+                    ? "border-blue-500/50 bg-blue-900/10 shadow-[0_0_15px_rgba(59,130,246,0.2)]"
+                    : att.word === lastWord 
+                    ? "border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.2)]" 
+                    : "border-zinc-800"
                 }`}
               >
                 <div className="flex justify-between text-[9px] uppercase tracking-widest mb-1">
-                  <span className="text-zinc-500">Source: {att.player}</span>
-                  <span className={att.rank <= 500 ? "text-green-400" : "text-zinc-400"}>
+                <span className={att.player === "SYSTEM_DECODER" ? "text-blue-400 font-bold" : "text-zinc-500"}>
+                    {att.player === "SYSTEM_DECODER" ? "!!! SYSTEM_DECODER_HINT !!!" : `Source: ${att.player}`}
+                </span>
+                <span className={att.rank <= 500 ? "text-green-400" : "text-zinc-400"}>
                     Rank: {att.rank}
                   </span>
                 </div>
