@@ -3,10 +3,14 @@ import io from 'socket.io-client';
 import Lobby from './components/Lobby';
 import GameBoard from './components/GameBoard';
 
-const socket = io(window.location.hostname === 'localhost' 
-  ? 'http://localhost:3000' 
-  : `http://${window.location.hostname}:3000`
-);
+// const socket = io(window.location.hostname === 'localhost' 
+//   ? 'http://localhost:3000' 
+//   : `http://${window.location.hostname}:3000`
+// );
+
+// ВАЖЛИВО: Використовуємо змінну оточення для URL сервера
+const SOCKET_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:3000';
+const socket = io(SOCKET_URL);
 
 function App() {
   const [user, setUser] = useState(null);
