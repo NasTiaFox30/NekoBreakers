@@ -44,9 +44,36 @@ const Avatar = ({ isTyping, isMain, submitted, username }) => {
         <Paw isTyping={isTyping} side="right" />
       </div>
 
-      {/* Візуалізація девайсу (Клавіатура для ПК, Телефон для мобільного ) */}
-      <div className="w-16 h-4 bg-zinc-800 border border-zinc-700 rounded-t-md -mt-2 flex px-1 items-center">
-          <div className="w-full h-[1px] bg-zinc-600 opacity-50"></div>
+      {/* KEYBOARD VISUALIZATION */}
+      <div 
+        className="relative -mt-3 z-0" 
+        style={{ perspective: '300px' }}
+      >
+        <div className="w-28 h-6 bg-zinc-900 border-b-1 border-zinc-700 rounded-sm shadow-2xl origin-bottom"
+          style={{
+          transform: 'rotateX(15deg)', 
+          background: 'linear-gradient(to bottom, #18181b 0%, #111114 40%, #09090b 100%)',
+        }}>
+          {/* Імітація рядів клавіш (ASCII-смужки) */}
+          <div className="absolute inset-x-2 top-1 space-y-1.5 opacity-60">
+            {/* Ряд 2  */}
+            <div className="h-1 flex gap-2 px-4">
+              <div className="flex-1 bg-zinc-700 rounded-sm border-b border-black shadow-inner opacity-70"></div>
+            </div>
+            {/* Ряд 1 */}
+            <div className="h-1 flex gap-1">
+              {[...Array(10)].map((_, i) => (
+                <div key={i} className="flex-1 bg-zinc-800 rounded-sm border-b border-black shadow-inner"></div>
+              ))}
+            </div>
+          </div>
+
+          {/* Легке внутрішнє світіння від "екрану" */}
+          <div className="absolute inset-0 bg-white/5 blur-sm rounded-sm"></div>
+        </div>
+
+        {/* Тінь під клавіатурою для відриву від тла */}
+        <div className="absolute -bottom-2 inset-x-4 h-4 bg-black/80 blur-md -z-10 rounded-full"></div>
       </div>
 
       {/* Нік */}
