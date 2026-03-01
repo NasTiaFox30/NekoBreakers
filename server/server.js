@@ -1,4 +1,5 @@
 const express = require('express');
+const axios = require('axios');
 const http = require('http');
 const { Server } = require('socket.io');
 
@@ -9,17 +10,48 @@ const io = new Server(server, {
 });
 
 const rooms = {};
-const deletionTimers = {}; // { roomId: timeoutId }
+const deletionTimers = {};
 
-// Список слів для прикладу (потім заміна на семантичну базу)
-const WORDS_DATABASE = ["APPLE", "COFFEE", "LAPTOP", "HACKER", "CAT", "ROUTER"];
+// Базові URL для вашого мікросервісу на Hugging Face
+const BRAIN_BASE_URL = 'https://nastiafox30-neko-brakers-core.hf.space';
 
+/**
+ * Функція для отримання випадкового слова безпосередньо з нейромережі
+ */
+async function fetchRandomWord() {
+    try {
+        const response = await axios.get(`${BRAIN_BASE_URL}/get_word`, { timeout: 7000 });
+        return response.data.word; // Очікуємо слово у форматі { word: "СЛОВО" }
+    } catch (error) {
+        console.error("Помилка отримання слова з ядра:", error.message);
+        // Запасний список на випадок збою мережі
+        const fallback = ["КУХНЯ", "ПРОГРАМА", "МЕРЕЖА", "КІБЕРНЕТИКА", "КОТЯРА"];
+        return fallback[Math.floor(Math.random() * fallback.length)];
+    }
+}
+
+async function calculateRank(word, target) {
+    if (word === target) return 1;
+    try {
+        const response = await axios.post(`${BRAIN_BASE_URL}/similarity`, {
+            word1: word.toLowerCase(),
+            word2: target.toLowerCase()
+        }, { timeout: 15000 });
+        
+        // Ми отримуємо пряме значення позиції (1, 45, 1200...)
+        return response.data.rank || 4999;
+        
+    } catch (error) {
+        console.error("Brain Error:", error.message);
+        return 4999; 
+    }
+}
 
 io.on('connection', (socket) => {
-    socket.on('join_room', ({ roomId, username, isOwner, isMobile }) => {
+    socket.on('join_room', async ({ roomId, username, isOwner, isMobile }) => {
+        console.log(`Гравець ${username} заходить у ${roomId}`);
 
-        console.log(`Гравець ${username} приєднується до кімнати ${roomId} (Owner: ${isOwner})`);
-        // Якщо кімната була в черзі на видалення — скасовуємо
+        // Скасування видалення кімнати
         if (deletionTimers[roomId]) {
             clearTimeout(deletionTimers[roomId]);
             delete deletionTimers[roomId];
@@ -29,12 +61,14 @@ io.on('connection', (socket) => {
         socket.join(roomId);
         
         if (!rooms[roomId]) {
+            const targetWord = await fetchRandomWord(); 
             rooms[roomId] = {
                 ownerId: isOwner ? socket.id : null,
-                targetWord: WORDS_DATABASE[Math.floor(Math.random() * WORDS_DATABASE.length)],
+                targetWord: targetWord,
                 players: [],
                 history: []
             };
+            console.log(`Кімната ${roomId} активована. Ціль: ${targetWord}`);
         }
 
         // Перевірка на перепідключення (Persistence)
@@ -53,43 +87,13 @@ io.on('connection', (socket) => {
         socket.emit('receive_history', rooms[roomId].history);
     });
 
-    const handleLeave = (socketId) => {
-        for (const roomId in rooms) {
-            const playerIndex = rooms[roomId].players.findIndex(p => p.id === socketId);
-            
-            if (playerIndex !== -1) {
-                const isLeavingOwner = rooms[roomId].players[playerIndex].id === rooms[roomId].ownerId;
-                rooms[roomId].players.splice(playerIndex, 1);
-
-                // Якщо вийшов власник, призначаємо нового (якщо є хтось інший)
-                if (isLeavingOwner && rooms[roomId].players.length > 0) {
-                    rooms[roomId].ownerId = rooms[roomId].players[0].id;
-                    rooms[roomId].players[0].isOwner = true;
-                }
-
-                // Якщо кімната порожня — ставимо таймер на 10 хвилин
-                if (rooms[roomId].players.length === 0) {
-                    console.log(`Кімната ${roomId} порожня, видалення за 10 хв...`);
-                    deletionTimers[roomId] = setTimeout(() => {
-                        delete rooms[roomId];
-                        console.log(`Кімнату ${roomId} видалено за неактивність (10 хв)`);
-                    }, 10 * 60 * 1000); 
-                } else {
-                    io.to(roomId).emit('player_joined', rooms[roomId].players);
-                    console.log(`Кімнату ${roomId} оновлено (гравців: ${rooms[roomId].players.length})`);
-                }
-            }
-        }
-    };
-
-    socket.on('send_guess', ({ word, player, roomId }) => {
+    socket.on('send_guess', async ({ word, player, roomId }) => {
         if (!rooms[roomId]) return;
 
         const cleanWord = word.trim().toUpperCase();
+        const target = rooms[roomId].targetWord;
         
-        // Тимчасовий ранг (замінимо на семантику пізніше)
-        const isWin = cleanWord === rooms[roomId].targetWord;
-        const rank = isWin ? 1 : Math.floor(Math.random() * 5000) + 2; 
+        const rank = await calculateRank(cleanWord, target);
         
         const attempt = {
             player,
@@ -103,7 +107,7 @@ io.on('connection', (socket) => {
         // Розсилаємо ВСІМ у кімнаті
         io.to(roomId).emit('receive_guess', attempt);
 
-        if (isWin) {
+        if (rank === 1) {
             io.to(roomId).emit('game_won', { winner: player, word: cleanWord });
         }
     });
@@ -113,13 +117,35 @@ io.on('connection', (socket) => {
         socket.to(roomId).emit('display_typing', { id: socket.id, isTyping });
     });
 
+    const handleLeave = (socketId) => {
+        for (const roomId in rooms) {
+            const playerIndex = rooms[roomId].players.findIndex(p => p.id === socketId);
+            if (playerIndex !== -1) {
+                rooms[roomId].players.splice(playerIndex, 1);
+                
+                if (rooms[roomId].players.length === 0) {
+                    // Видалення через 10 хвилин, якщо ніхто не повернувся
+                    deletionTimers[roomId] = setTimeout(() => {
+                        delete rooms[roomId];
+                        console.log(`Кімната ${roomId} видалена за неактивність`);
+                    }, 10 * 60 * 1000); 
+                } else {
+                    io.to(roomId).emit('player_joined', rooms[roomId].players);
+                }
+            }
+        }
+    };
+
     socket.on('leave_room', () => {
         handleLeave(socket.id);
         socket.disconnect(); // Розірвати з'єднання з клієнтом після виходу
     });
 
+    socket.on('disconnect', () => {
+        handleLeave(socket.id);
+    });
 });
 
 server.listen(3000, '0.0.0.0', () => {
-    console.log('NekoBreakers Server - active on port 3000 (Global access)');
+    console.log('NekoBreakers Server: Running on port 3000');
 });
