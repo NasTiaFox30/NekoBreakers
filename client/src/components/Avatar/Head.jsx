@@ -36,6 +36,19 @@ const Head = ({ lefteye, righteye, mouth, showExclamation }) => {
       
       {/* Ніс */}
       <path d="M235,310 L265,310 L250,335 Z" fill="white"/>
+
+      {/* Анімаця надсилання "!" */}
+      <motion.text
+        x="420" y="80"
+        fill="#ff9500"
+        fontSize="150"
+        fontWeight="bold"
+        initial={{ opacity: 0, scale: 0 }}
+        animate={showExclamation ? { opacity: 1, scale: 1, y: [0, -20, 0] } : { opacity: 0, scale: 0 }}
+        transition={{ type: "spring", stiffness: 300 }}
+      >
+        !
+      </motion.text>
       
       {/* Вуса ліворуч */}
       <line x1="10" y1="280" x2="65" y2="280" stroke="white" strokeWidth="8" strokeLinecap="round" />
