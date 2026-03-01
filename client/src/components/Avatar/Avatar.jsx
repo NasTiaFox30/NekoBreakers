@@ -2,10 +2,18 @@ import { useState, useEffect } from 'react';
 import Head from './Head';
 import Paw from './Paw';
 
-const Avatar = ({isTyping, isMain }) => {
+const Avatar = ({ isTyping, isMain, submitted }) => {
   const [expressions, setExpressions] = useState({ lefteye: "0", righteye: "0", mouth: "u" });
+  const [showExclamation, setShowExclamation] = useState(false);
+  
+  useEffect(() => {
+    if (submitted) {
+      setShowExclamation(true);
+      const timer = setTimeout(() => setShowExclamation(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [submitted]);
 
-  // Генеруємо випадкову мордочку при першому рендері
   useEffect(() => {
     const eyesList = ["0", "*", ">", "<", "-", "X", "U"];
     const mouths = ["u", "v", "_", "w"];
@@ -18,7 +26,7 @@ const Avatar = ({isTyping, isMain }) => {
   }, []);
 
   return (
-    <div className={`relative flex flex-col items-center ${isMain ? 'scale-110' : 'scale-75'}`}>
+    <div className={`relative flex flex-col items-center transition-transform duration-500 ${isMain ? 'scale-110' : 'scale-75'}`}>
       {/* Голова */}
       <div className="w-32 h-32">
         <Head 
@@ -26,6 +34,7 @@ const Avatar = ({isTyping, isMain }) => {
           righteye={expressions.righteye} 
           mouth={expressions.mouth} 
           isTyping={isTyping}
+          showExclamation={showExclamation}
         />
       </div>
 
