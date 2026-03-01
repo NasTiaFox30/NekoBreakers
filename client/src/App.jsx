@@ -9,8 +9,7 @@ import GameBoard from './components/GameBoard';
 // );
 
 // Vite використовує import.meta.env замість process.env
-const SOCKET_URL = import.meta.env.VITE_SERVER_URL;
-const socket = io(SOCKET_URL);
+const socket = io(import.meta.env.VITE_APP_SERVER_URL);
 
 function App() {
   const [user, setUser] = useState(null);
