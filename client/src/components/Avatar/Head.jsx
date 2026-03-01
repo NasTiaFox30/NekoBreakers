@@ -1,6 +1,27 @@
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 
-const Head = ({ lefteye, righteye, mouth }) => {
+const Head = ({ lefteye, righteye, mouth, showExclamation }) => {
+  const [blink, setBlink] = useState(false);
+  const [lookDir, setLookDir] = useState(0);
+
+  useEffect(() => {
+    // Логіка випадкового кліпання та поглядів
+    const interval = setInterval(() => {
+      const rand = Math.random();
+      if (rand < 0.2) { // 20% шанс кліпнути
+        setBlink(true);
+        setTimeout(() => setBlink(false), 150);
+      } else if (rand < 0.4) { // 20% шанс подивитися вбік
+        setLookDir(Math.random() > 0.5 ? 15 : -15);
+        setTimeout(() => setLookDir(0), 1500);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+
   return (
     <svg width="100%" height="100%" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
       {/* Контур голови */}
@@ -24,30 +45,31 @@ const Head = ({ lefteye, righteye, mouth }) => {
       <line x1="435" y1="280" x2="490" y2="280" stroke="white" strokeWidth="8" strokeLinecap="round" />
       <line x1="435" y1="310" x2="490" y2="310" stroke="white" strokeWidth="8" strokeLinecap="round" />
 
-      {/* ОЧІ (ліве) */}
-      <motion.text 
-        x="200" y="290" 
-        textAnchor="middle" 
-        fill="white" 
-        fontSize="80" 
-        fontWeight="bold"
-        style={{ fontFamily: 'monospace' }}
-        transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
-      >
-        {lefteye}
-      </motion.text>
-      {/* ОЧІ (праве) */}
-      <motion.text 
-        x="300" y="290" 
-        textAnchor="middle" 
-        fill="white" 
-        fontSize="80" 
-        fontWeight="bold"
-        style={{ fontFamily: 'monospace' }}
-        transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
-      >
-        {righteye}
-      </motion.text>
+       {/* ОЧІ */}
+       <motion.g animate={{ x: lookDir }} transition={{ type: "spring", stiffness: 100 }}>
+         {/* Ліве око */}
+         <text 
+          x="190" y="290" 
+          textAnchor="middle" 
+          fill="white" 
+          fontSize="80" 
+          fontWeight="bold"
+          style={{ fontFamily: 'monospace' }}
+        >
+          {blink ? "_" : lefteye}
+        </text>
+        {/* Праве око */}
+        <text 
+          x="310" y="290" 
+          textAnchor="middle" 
+          fill="white" 
+          fontSize="80" 
+          fontWeight="bold"
+          style={{ fontFamily: 'monospace' }}
+        >
+          {blink ? "_" : righteye}
+        </text>
+      </motion.g>
 
       {/* РОТ */}
       <text 
