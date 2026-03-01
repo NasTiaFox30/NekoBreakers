@@ -8,8 +8,8 @@ import GameBoard from './components/GameBoard';
 //   : `http://${window.location.hostname}:3000`
 // );
 
-// ВАЖЛИВО: Використовуємо змінну оточення для URL сервера
-const SOCKET_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:3000';
+// Vite використовує import.meta.env замість process.env
+const SOCKET_URL = import.meta.env.VITE_APP_SERVER_URL || 'http://localhost:3000';
 const socket = io(SOCKET_URL);
 
 function App() {
