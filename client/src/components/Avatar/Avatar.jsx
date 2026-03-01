@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from './Head';
 import Paw from './Paw';
 
-const Avatar = ({ isTyping, isMain, submitted }) => {
+const Avatar = ({ isTyping, isMain, submitted, username }) => {
   const [expressions, setExpressions] = useState({ lefteye: "0", righteye: "0", mouth: "u" });
   const [showExclamation, setShowExclamation] = useState(false);
   
@@ -47,6 +47,15 @@ const Avatar = ({ isTyping, isMain, submitted }) => {
       {/* Візуалізація девайсу (Клавіатура для ПК, Телефон для мобільного ) */}
       <div className="w-16 h-4 bg-zinc-800 border border-zinc-700 rounded-t-md -mt-2 flex px-1 items-center">
           <div className="w-full h-[1px] bg-zinc-600 opacity-50"></div>
+      </div>
+
+      {/* Нік */}
+      <div className="mt-2 text-[10px] uppercase tracking-tighter text-zinc-600 font-mono">
+        {isMain ? (
+          <span className="absolute text-white font-bold tracking-widest">_YOU</span>
+        ) : (
+          <span>{username || "Unknown Cat"}</span>
+        )}
       </div>
     </div>
   );
