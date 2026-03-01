@@ -8,8 +8,15 @@ import GameBoard from './components/GameBoard';
 //   : `http://${window.location.hostname}:3000`
 // );
 
-// Vite використовує import.meta.env замість process.env
-const socket = io(import.meta.env.VITE_APP_SERVER_URL);
+// Додаємо пряме посилання як запасний варіант (Fallback)
+const SERVER_URL = import.meta.env.VITE_APP_SERVER_URL || "https://relevant-arabela-anpurrecode-7b47cd10.koyeb.app";
+
+const socket = io(SERVER_URL, {
+    transports: ["websocket", "polling"],
+    withCredentials: true,
+    reconnection: true,
+    reconnectionAttempts: 5
+});
 
 function App() {
   const [user, setUser] = useState(null);

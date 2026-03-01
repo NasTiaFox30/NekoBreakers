@@ -12,7 +12,7 @@ const io = new Server(server, {
 const rooms = {};
 const deletionTimers = {};
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 
 // Базові URL для вашого мікросервісу на Hugging Face
 const BRAIN_BASE_URL = 'https://nastiafox30-neko-brakers-core.hf.space';
