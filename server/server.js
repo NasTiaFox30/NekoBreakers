@@ -12,6 +12,8 @@ const io = new Server(server, {
 const rooms = {};
 const deletionTimers = {};
 
+const PORT = process.env.PORT;
+
 // Базові URL для вашого мікросервісу на Hugging Face
 const BRAIN_BASE_URL = 'https://nastiafox30-neko-brakers-core.hf.space';
 
@@ -188,6 +190,7 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(3000, '0.0.0.0', () => {
-    console.log('NekoBreakers Server: Running on port 3000');
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`NekoBreakers Server: Running on port ${PORT}`);
+    console.log(`Global access enabled via 0.0.0.0`);
 });
