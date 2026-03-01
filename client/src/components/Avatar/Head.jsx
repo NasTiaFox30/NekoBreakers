@@ -50,11 +50,9 @@ const Head = ({ lefteye, righteye, mouth, showExclamation }) => {
         !
       </motion.text>
       
-      {/* Вуса ліворуч */}
+      {/* Вуса */}
       <line x1="10" y1="280" x2="65" y2="280" stroke="white" strokeWidth="8" strokeLinecap="round" />
       <line x1="10" y1="310" x2="65" y2="310" stroke="white" strokeWidth="8" strokeLinecap="round" />
-      
-      {/* Вуса праворуч */}
       <line x1="435" y1="280" x2="490" y2="280" stroke="white" strokeWidth="8" strokeLinecap="round" />
       <line x1="435" y1="310" x2="490" y2="310" stroke="white" strokeWidth="8" strokeLinecap="round" />
 
