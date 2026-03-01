@@ -17,6 +17,8 @@ const WORDS_DATABASE = ["APPLE", "COFFEE", "LAPTOP", "HACKER", "CAT", "ROUTER"];
 
 io.on('connection', (socket) => {
     socket.on('join_room', ({ roomId, username, isOwner }) => {
+
+        console.log(`Гравець ${username} приєднується до кімнати ${roomId} (Owner: ${isOwner})`);
         // Якщо кімната була в черзі на видалення — скасовуємо
         if (deletionTimers[roomId]) {
             clearTimeout(deletionTimers[roomId]);
@@ -66,12 +68,14 @@ io.on('connection', (socket) => {
 
                 // Якщо кімната порожня — ставимо таймер на 10 хвилин
                 if (rooms[roomId].players.length === 0) {
+                    console.log(`Кімната ${roomId} порожня, видалення за 10 хв...`);
                     deletionTimers[roomId] = setTimeout(() => {
                         delete rooms[roomId];
                         console.log(`Кімнату ${roomId} видалено за неактивність (10 хв)`);
                     }, 10 * 60 * 1000); 
                 } else {
                     io.to(roomId).emit('player_joined', rooms[roomId].players);
+                    console.log(`Кімнату ${roomId} оновлено (гравців: ${rooms[roomId].players.length})`);
                 }
             }
         }
