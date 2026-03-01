@@ -4,23 +4,64 @@ import { useState, useEffect } from 'react';
 const Head = ({ lefteye, righteye, mouth, showExclamation }) => {
   const [blink, setBlink] = useState(false);
   const [lookDir, setLookDir] = useState(0);
+  
+  // Внутрішні стани для динамічної зміни виразу обличчя
+  const [currentEyes, setCurrentEyes] = useState({ left: lefteye, right: righteye });
+  const [currentMouth, setCurrentMouth] = useState(mouth);
+
+  // Списки можливих символів для випадкової зміни
+  const eyesList = ["0", "*", ">", "<", "-", "X", "U", "$", "@"];
+  const mouthsList = ["u", "v", "_", "w", ".", "3"];
+
+  // Синхронізація з пропсами, якщо вони приходять зовні (наприклад, при зміні гравця)
+  useEffect(() => {
+    setCurrentEyes({ left: lefteye, right: righteye });
+    setCurrentMouth(mouth);
+  }, [lefteye, righteye, mouth]);
 
   useEffect(() => {
-    // Логіка випадкового кліпання та поглядів
     const interval = setInterval(() => {
       const rand = Math.random();
-      if (rand < 0.2) { // 20% шанс кліпнути
+
+      // Логіка моргання
+      if (rand < 0.4) { 
         setBlink(true);
+        
+        // З шансом 20% змінюємо стиль очей ПІСЛЯ моргання
+        if (Math.random() < 0.2) {
+          const newEye = eyesList[Math.floor(Math.random() * eyesList.length)];
+          const changeType = Math.random();
+
+          if (changeType < 0.33) {
+            // Змінюємо тільки ліве
+            setCurrentEyes(prev => ({ ...prev, left: newEye }));
+          } else if (changeType < 0.66) {
+            // Змінюємо тільки праве
+            setCurrentEyes(prev => ({ ...prev, right: newEye }));
+          } else {
+            // Змінюємо обидва (синхронно)
+            setCurrentEyes({ left: newEye, right: newEye });
+          }
+        }
+
         setTimeout(() => setBlink(false), 150);
-      } else if (rand < 0.4) { // 20% шанс подивитися вбік
+      } 
+      
+      // Логіка зміни рота (шанс 10% незалежно від моргання)
+      if (Math.random() < 0.1) {
+        const newMouth = mouthsList[Math.floor(Math.random() * mouthsList.length)];
+        setCurrentMouth(newMouth);
+      }
+
+      // Шанс подивитися вбік
+      if (rand > 0.7) {
         setLookDir(Math.random() > 0.5 ? 15 : -15);
         setTimeout(() => setLookDir(0), 1500);
       }
     }, 3000);
 
     return () => clearInterval(interval);
-  }, []);
-
+  }, [lefteye, righteye, mouth]);
 
   return (
     <svg width="100%" height="100%" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
@@ -56,10 +97,10 @@ const Head = ({ lefteye, righteye, mouth, showExclamation }) => {
       <line x1="435" y1="280" x2="490" y2="280" stroke="white" strokeWidth="8" strokeLinecap="round" />
       <line x1="435" y1="310" x2="490" y2="310" stroke="white" strokeWidth="8" strokeLinecap="round" />
 
-       {/* ОЧІ */}
-       <motion.g animate={{ x: lookDir }} transition={{ type: "spring", stiffness: 100 }}>
-         {/* Ліве око */}
-         <text 
+      {/* ОЧІ */}
+      <motion.g animate={{ x: lookDir }} transition={{ type: "spring", stiffness: 100 }}>
+        {/* Ліве око */}
+        <text 
           x="190" y="290" 
           textAnchor="middle" 
           fill="white" 
@@ -67,7 +108,7 @@ const Head = ({ lefteye, righteye, mouth, showExclamation }) => {
           fontWeight="bold"
           style={{ fontFamily: 'monospace' }}
         >
-          {blink ? "_" : lefteye}
+          {blink ? "_" : currentEyes.left}
         </text>
         {/* Праве око */}
         <text 
@@ -78,7 +119,7 @@ const Head = ({ lefteye, righteye, mouth, showExclamation }) => {
           fontWeight="bold"
           style={{ fontFamily: 'monospace' }}
         >
-          {blink ? "_" : righteye}
+          {blink ? "_" : currentEyes.right}
         </text>
       </motion.g>
 
@@ -90,7 +131,7 @@ const Head = ({ lefteye, righteye, mouth, showExclamation }) => {
         fontSize="60"
         style={{ fontFamily: 'monospace' }}
       >
-        {mouth}
+        {currentMouth}
       </text>
     </svg>
   );
