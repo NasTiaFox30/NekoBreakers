@@ -79,7 +79,7 @@ const Avatar = ({ isTyping, isMain, submitted, username }) => {
       {/* Нік */}
       <div className="mt-2 text-[10px] uppercase tracking-tighter text-zinc-600 font-mono">
         {isMain ? (
-          <span className="absolute text-white font-bold tracking-widest">_YOU</span>
+          <span className="text-white font-bold tracking-widest pb-0.5">_YOU</span>
         ) : (
           <span>{username || "Unknown Cat"}</span>
         )}
