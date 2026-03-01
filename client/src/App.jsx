@@ -22,9 +22,12 @@ function App() {
   }, []);
 
   const handleJoin = (data) => {
-    setUser(data);
-    localStorage.setItem('neko_session', JSON.stringify(data));
-    socket.emit('join_room', data);
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const userData = { ...data, isMobile };
+    
+    setUser(userData);
+    localStorage.setItem('neko_session', JSON.stringify(userData));
+    socket.emit('join_room', userData);
   };
 
   const handleLogout = () => {

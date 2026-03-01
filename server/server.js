@@ -16,7 +16,7 @@ const WORDS_DATABASE = ["APPLE", "COFFEE", "LAPTOP", "HACKER", "CAT", "ROUTER"];
 
 
 io.on('connection', (socket) => {
-    socket.on('join_room', ({ roomId, username, isOwner }) => {
+    socket.on('join_room', ({ roomId, username, isOwner, isMobile }) => {
 
         console.log(`Гравець ${username} приєднується до кімнати ${roomId} (Owner: ${isOwner})`);
         // Якщо кімната була в черзі на видалення — скасовуємо
@@ -41,8 +41,9 @@ io.on('connection', (socket) => {
         const existingPlayer = rooms[roomId].players.find(p => p.username === username);
         if (existingPlayer) {
             existingPlayer.id = socket.id;
+            existingPlayer.isMobile = isMobile;
         } else {
-            rooms[roomId].players.push({ id: socket.id, username, isOwner });
+            rooms[roomId].players.push({ id: socket.id, username, isOwner, isMobile });
         }
 
         // отримуємо оновлений список гравців у кімнаті
