@@ -26,7 +26,7 @@ const Avatar = ({ isTyping, isMain, submitted, username }) => {
   }, []);
 
   return (
-    <div className={`relative flex flex-col items-center transition-transform duration-500 ${isMain ? 'scale-110' : 'scale-75'}`}>
+    <div className={`relative flex flex-col items-center transition-transform duration-500 ${isMain ? 'scale-130' : 'scale-95'}`}>
       {/* Голова */}
       <div className="w-32 h-32">
         <Head 
