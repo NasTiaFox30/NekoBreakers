@@ -136,6 +136,24 @@ io.on('connection', (socket) => {
         }
     };
 
+    // Рестарт гри (тільки для власника кімнати або за домовленістю)
+    socket.on('restart_room', async ({ roomId }) => {
+        if (!rooms[roomId]) return;
+
+        console.log(`Рестарт кімнати ${roomId}`);
+        const newWord = await fetchRandomWord(); // Беремо нове слово з Python
+        
+        rooms[roomId].targetWord = newWord;
+        rooms[roomId].history = []; // Очищаємо історію
+        console.log(`Кімната ${roomId} активована. Ціль: ${newWord}`);
+
+        // Повідомляємо всіх, що гра почалася знову
+        io.to(roomId).emit('room_restarted', { 
+            message: "SYSTEM: Database wiped. New encryption detected.",
+            history: [] 
+        });
+    });
+
     socket.on('leave_room', () => {
         handleLeave(socket.id);
         socket.disconnect(); // Розірвати з'єднання з клієнтом після виходу

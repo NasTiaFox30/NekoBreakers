@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
 import Avatar from './Avatar/Avatar';
 
 const GameBoard = ({ socket, user, onLogout }) => {
@@ -10,6 +11,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
     const [lastSubmiter, setLastSubmiter] = useState(null);
     const [lastSubmit, setLastSubmit] = useState(0);
     const [lastWord, setLastWord] = useState('********');
+    const [isWon, setIsWon] = useState(false);
   
     // Реф для контейнера списку спроб
     const scrollRef = useRef(null);
@@ -59,7 +61,27 @@ const GameBoard = ({ socket, user, onLogout }) => {
     });
 
     socket.on('game_won', ({ winner, word }) => {
-      alert(`ACCESS GRANTED! Hacker ${winner} broke the code: ${word}`);
+        setIsWon(true);
+        setLastWord(word);
+        
+        // ФЕЄРВЕРКИ
+        const duration = 5 * 1000;
+        const animationEnd = Date.now() + duration;
+        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+        const interval = setInterval(function() {
+            const timeLeft = animationEnd - Date.now();
+            if (timeLeft <= 0) return clearInterval(interval);
+            const particleCount = 50 * (timeLeft / duration);
+            confetti({ ...defaults, particleCount, origin: { x: Math.random(), y: Math.random() - 0.2 } });
+        }, 250);
+    });
+
+    socket.on('room_restarted', ({ history }) => {
+        setAttempts(history);
+        setLastWord('********');
+        setIsWon(false);
+        setGuess('');
     });
 
     return () => {
@@ -84,6 +106,10 @@ const GameBoard = ({ socket, user, onLogout }) => {
         socket.emit('typing', { roomId: user.roomId, isTyping: false });
     };
 
+    const handleRestart = () => {
+        socket.emit('restart_room', { roomId: user.roomId });
+    };
+
   const handleLeave = () => {
     if (window.confirm("Вийти з поточної сесії зламу?")) {
       socket.emit('leave_room');
@@ -97,6 +123,29 @@ const GameBoard = ({ socket, user, onLogout }) => {
 
   return (
     <div className="min-h-screen bg-black text-white font-mono flex flex-col p-6 overflow-hidden select-none">
+
+        {/* YOU DID IT OVERLAY */}
+        <AnimatePresence>
+            {isWon && (
+                <motion.div 
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                    className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/80 backdrop-blur-bg"
+                >
+                    <motion.h1 
+                        initial={{ scale: 0.5, y: 50 }} animate={{ scale: 1, y: 0 }}
+                        className="text-6xl font-black text-green-500 tracking-[0.3em] mb-8"
+                    >
+                        YOU DID IT!
+                    </motion.h1>
+                    <button 
+                        onClick={handleRestart}
+                        className="px-8 py-3 border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-black transition-all font-bold tracking-widest uppercase"
+                    >
+                        [ Reboot System / Restart ]
+                    </button>
+                </motion.div>
+            )}
+        </AnimatePresence>
       
         {/* HEADER */}
         <div className="border-b border-zinc-900 pb-4 mb-6 flex justify-between items-end">
