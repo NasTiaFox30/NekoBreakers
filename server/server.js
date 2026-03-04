@@ -45,7 +45,7 @@ async function calculateRank(word, target) {
         
     } catch (error) {
         console.error("Brain Error:", error.message);
-        return 4999; 
+        return 499999; // Fallback (помилки мережі або ядра)
     }
 }
 
