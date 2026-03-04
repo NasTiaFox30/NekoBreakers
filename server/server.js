@@ -40,9 +40,8 @@ async function calculateRank(word, target) {
             word2: target.toLowerCase()
         }, { timeout: 15000 });
         
-        // Ми отримуємо пряме значення позиції (1, 45, 1200...)
-        return response.data.rank || 4999;
-        
+        // Повертаємо 0 для архіву або реальну цифру (1 - 300,000+)
+        return response.data.rank; 
     } catch (error) {
         console.error("Brain Error:", error.message);
         return 499999; // Fallback (помилки мережі або ядра)
