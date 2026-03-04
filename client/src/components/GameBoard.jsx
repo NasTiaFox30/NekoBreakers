@@ -13,7 +13,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
     const [lastSubmit, setLastSubmit] = useState(0);
     const [lastWord, setLastWord] = useState('********');
     const [lastHint, setLastHint] = useState(null);
-    const [isWon, setIsWon] = useState(false);
+    const [rejectedWord, setRejectedWord] = useState(null);
     const [isWon, setIsWon] = useState(false);
   
     // Реф для контейнера списку спроб
