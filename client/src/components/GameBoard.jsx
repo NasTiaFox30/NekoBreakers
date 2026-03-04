@@ -5,6 +5,7 @@ import Avatar from './Avatar/Avatar';
 
 const GameBoard = ({ socket, user, onLogout }) => {
     const [guess, setGuess] = useState('');
+    const [archive, setArchive] = useState([]);
     const [attempts, setAttempts] = useState([]);
     const [players, setPlayers] = useState([]);
     const [typingPlayers, setTypingPlayers] = useState({});
