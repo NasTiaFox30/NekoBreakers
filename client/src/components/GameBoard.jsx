@@ -5,101 +5,165 @@ import Avatar from './Avatar/Avatar';
 
 const GameBoard = ({ socket, user, onLogout }) => {
     const [guess, setGuess] = useState('');
+    const [archive, setArchive] = useState([]);
     const [attempts, setAttempts] = useState([]);
     const [players, setPlayers] = useState([]);
     const [typingPlayers, setTypingPlayers] = useState({});
     const [lastSubmiter, setLastSubmiter] = useState(null);
     const [lastSubmit, setLastSubmit] = useState(0);
     const [lastWord, setLastWord] = useState('********');
+    const [lastHint, setLastHint] = useState(null);
+    const [rejectedWord, setRejectedWord] = useState(null);
+    const [isAutoScrollLocked, setIsAutoScrollLocked] = useState(false);
     const [isWon, setIsWon] = useState(false);
   
     // Реф для контейнера списку спроб
     const scrollRef = useRef(null);
 
-    // Логіка автоматичного скролу при появі нового слова
+    // Логіка автоматичного скролу
     useEffect(() => {
         if (scrollRef.current) {
-        // Знаходимо елемент -lastWord
-        const activeElement = scrollRef.current.querySelector('.border-green-500\\/50');
-        if (activeElement) {
-            activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        }
-    }, [attempts, lastWord]); // Спрацьовує, коли змінюється список або останнє слово
+            const targetWord = lastHint || lastWord;
+            
+            // Знаходимо всі наші блоки спроб
+            const elements = scrollRef.current.querySelectorAll('.bg-zinc-900\\/40');
+            
+            // Шукаємо серед них той, де текст збігається з актуальним словом
+            const activeElement = Array.from(elements).find(el => 
+                el.textContent.includes(targetWord)
+            );
 
-    // Функція запиту підказки
+            if (activeElement) {
+                activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }, [attempts, lastWord, lastHint]); //При зміні списку, останнього слова, підказки
+
+    // Логіка блокування автоскролу після ручного скролу
+    useEffect(() => {
+        // Якщо скрол заблокований кнопкою "Show Top", нічого не робимо
+        if (isAutoScrollLocked) return;
+
+        if (scrollRef.current) {
+            const targetWord = lastHint || lastWord;
+            const elements = scrollRef.current.querySelectorAll('.bg-zinc-900\\/40');
+            const activeElement = Array.from(elements).find(el => 
+                el.textContent.includes(targetWord)
+            );
+
+            if (activeElement) {
+                activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }, [attempts, lastWord, lastHint, isAutoScrollLocked]);
+
+    // Cокет-слухачі для оновлення стану гри
+    useEffect(() => {
+        socket.on('player_joined', (updatedPlayers) => setPlayers(updatedPlayers));
+        
+        socket.on('receive_history', (history) => {
+            // Фільтруємо історію, щоб при завантаженні не показувати архівні слова (rank 0)
+            const validHistory = history.filter(h => h.rank !== 0);
+            const sorted = [...validHistory].sort((a, b) => a.rank - b.rank);
+            setAttempts(sorted);
+
+            if (validHistory.length > 0) {
+                const latest = validHistory.reduce((prev, current) => 
+                    (prev.timestamp > current.timestamp) ? prev : current
+                );
+                setLastWord(latest.word);
+            }
+        });
+
+        socket.on('receive_guess', (newAttempt) => {
+            console.log("Отримано нову спробу/підказку:", newAttempt);
+
+            // ЛОГІКА ЧОРНОГО АРХІВУ (якщо ранг 0)
+            if (newAttempt.rank === 0) {
+                setRejectedWord(newAttempt.word);
+                
+                setTimeout(() => {
+                    setArchive(prev => [newAttempt.word, ...prev].slice(0, 5)); 
+                    setRejectedWord(null);
+                }, 3000);
+                
+                return; // КРИТИЧНО: виходимо, щоб не додавати в attempts
+            }
+
+            // ЛОГІКА ГОЛОВНОГО СПИСКУ (якщо ранг > 0)
+            if (newAttempt.player === "SYSTEM_DECODER") {
+                setLastHint(newAttempt.word);
+            } else {
+                setLastWord(newAttempt.word);
+                setLastHint(null);
+            }
+            
+            // Встановлюємо, хто саме вистрілив кодом
+            setLastSubmiter({
+                username: newAttempt.player,
+                timestamp: Date.now()
+            });
+
+            setAttempts(prev => [...prev, newAttempt].sort((a, b) => a.rank - b.rank));
+        });
+
+        socket.on('display_typing', ({ id, isTyping }) => {
+            setTypingPlayers(prev => ({ ...prev, [id]: isTyping }));
+        });
+
+        socket.on('game_won', ({ winner, word }) => {
+            setIsWon(true);
+            setLastWord(word);
+            
+            // ФЕЄРВЕРКИ
+            const duration = 5 * 1000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            const interval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+                const particleCount = 50 * (timeLeft / duration);
+                confetti({ ...defaults, particleCount, origin: { x: Math.random(), y: Math.random() - 0.2 } });
+            }, 250);
+        });
+
+        socket.on('room_restarted', ({ history }) => {
+            setAttempts([]);
+            setArchive([]);
+            setLastWord('********');
+            setLastHint(null);
+            setIsWon(false);
+            setGuess('');
+        });
+
+        return () => {
+            socket.off('player_joined');
+            socket.off('receive_history');
+            socket.off('display_typing');
+            socket.off('receive_guess');
+            socket.off('game_won');
+            socket.off('room_restarted');
+        };
+    }, [socket]);
+
+
+    const handleShowTop = () => {
+        if (scrollRef.current) {
+            // Скролимо в самий вгору
+            scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Блокуємо автоскрол на 5 секунд
+            setIsAutoScrollLocked(true);
+            setTimeout(() => setIsAutoScrollLocked(false), 5000);
+        }
+    };
+
     const handleRequestHint = () => {
         if (window.confirm("Використати системний дешифратор для підказки?")) {
             socket.emit('request_hint', { roomId: user.roomId, player: user.username });
         }
     };
-
-    useEffect(() => {
-        socket.on('player_joined', (updatedPlayers) => setPlayers(updatedPlayers));
-        
-        socket.on('receive_history', (history) => {
-        const sorted = [...history].sort((a, b) => a.rank - b.rank);
-        setAttempts(sorted);
-        if (history.length > 0) {
-            const latest = history.reduce((prev, current) => 
-            (prev.timestamp > current.timestamp) ? prev : current
-            );
-            setLastWord(latest.word);
-        }
-    });
-
-    socket.on('receive_guess', (newAttempt) => {
-        console.log("Отримано нову спробу/підказку:", newAttempt);
-        setLastWord(newAttempt.word);
-        
-        // Встановлюємо, хто саме вистрілив кодом
-        setLastSubmiter({
-        username: newAttempt.player,
-        timestamp: Date.now()
-        });
-
-        setAttempts(prev => {
-        const updated = [...prev, newAttempt];
-        return updated.sort((a, b) => a.rank - b.rank);
-        });
-    });
-
-    socket.on('display_typing', ({ id, isTyping }) => {
-      setTypingPlayers(prev => ({ ...prev, [id]: isTyping }));
-    });
-
-    socket.on('game_won', ({ winner, word }) => {
-        setIsWon(true);
-        setLastWord(word);
-        
-        // ФЕЄРВЕРКИ
-        const duration = 5 * 1000;
-        const animationEnd = Date.now() + duration;
-        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
-        const interval = setInterval(function() {
-            const timeLeft = animationEnd - Date.now();
-            if (timeLeft <= 0) return clearInterval(interval);
-            const particleCount = 50 * (timeLeft / duration);
-            confetti({ ...defaults, particleCount, origin: { x: Math.random(), y: Math.random() - 0.2 } });
-        }, 250);
-    });
-
-    socket.on('room_restarted', ({ history }) => {
-        setAttempts(history);
-        setLastWord('********');
-        setIsWon(false);
-        setGuess('');
-    });
-
-    return () => {
-      socket.off('player_joined');
-      socket.off('receive_history');
-      socket.off('display_typing');
-      socket.off('receive_guess');
-      socket.off('game_won');
-    };
-    }, [socket]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -199,12 +263,52 @@ const GameBoard = ({ socket, user, onLogout }) => {
                     >
                         {'>'} Reboot_Level
                     </button>
+                    <button 
+                        onClick={handleShowTop}
+                        className={`text-[8px] mt-1 uppercase tracking-widest px-2 py-0.5 border transition-all ${
+                            isAutoScrollLocked ? 'bg-white text-black border-white' : 'text-zinc-500 border-zinc-800 hover:text-white hover:border-zinc-500'
+                        }`}
+                    >
+                        {isAutoScrollLocked ? '[ Locked_on_Top ]' : 'View_Leaderboard'}
+                    </button>
                 </div>
             </div>
 
             {/* RIGHT: Players count */}
             <div className="text-right text-[10px] text-zinc-500 uppercase tracking-widest">
                 Players: <span className="text-white">{players.length} / 3</span>
+            </div>
+
+        </div>
+
+        {/* BLACK ARCHIVE UNIT (Зліва знизу) */}
+        <div className="absolute bottom-4 left-4 w-48 pointer-events-none">
+            <div className="text-[9px] text-red-900 mb-2 tracking-[0.3em] uppercase border-b border-red-900/30 flex justify-between">
+                <span>System_Trash</span>
+                <span className="animate-pulse">●</span>
+            </div>
+            
+            <AnimatePresence>
+                {rejectedWord && (
+                    <motion.div
+                        initial={{ y: -20, x: 20, opacity: 0, scale: 1.5 }}
+                        animate={{ y: 0, x: 0, opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, filter: "blur(10px)" }}
+                        transition={{ duration: 1.5, ease: "easeIn" }}
+                        className="text-red-500 font-bold text-xs mb-2 tracking-widest"
+                    >
+                        {rejectedWord} {'>>'} REJECTED
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Список в архіві */}
+            <div className="space-y-1 opacity-20">
+                {archive.map((w, i) => (
+                    <div key={i} className="text-[8px] text-zinc-500 line-through truncate uppercase">
+                        {w}
+                    </div>
+                ))}
             </div>
         </div>
 

@@ -65,22 +65,29 @@ async def get_similarity(req: ComparisonRequest):
         w1 = req.word1.lower().strip()
         w2 = req.word2.lower().strip()
         
-        if w1 not in model or w2 not in model:
-            return {"similarity": 0.0, "rank": 4999, "info": "Word not found"}
+        # Перевірка наявності в словнику
+        if w1 not in model:
+            return {"error": "NOT_IN_VOCAB", "rank": 0} # Ранг 0 - поза словником
             
         sim = model.similarity(w1, w2)
         
-        # Рахуємо ранг серед ТОП-5000
-        similar_list = model.most_similar(w2, topn=5000)
-        rank = 5000
+        # Пошук реального рангу (шукаємо глибше для точності)
+        similar_list = model.most_similar(w2, topn=50000)
+        rank = 0
         for i, (word, score) in enumerate(similar_list):
             if word == w1:
                 rank = i + 1
                 break
+        
+        # Якщо поза ТОП-50000, масштабуємо ранг до кінця словника
+        if rank == 0:
+            total_vocab = len(model)
+            # Формула: стартовий поріг + (семантична відстань * залишок словника)
+            rank = int(50000 + (1 - sim) * (total_vocab - 50000))
                 
         return {"similarity": float(sim), "rank": rank}
     except Exception as e:
-        return {"similarity": 0.0, "rank": 4999, "error": str(e)}
+        return {"similarity": 0.0, "rank": 500000, "error": str(e)}
 
 @app.get("/get_word")
 async def get_random_word():
