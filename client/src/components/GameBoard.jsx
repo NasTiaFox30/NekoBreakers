@@ -210,6 +210,38 @@ const GameBoard = ({ socket, user, onLogout }) => {
             <div className="text-right text-[10px] text-zinc-500 uppercase tracking-widest">
                 Players: <span className="text-white">{players.length} / 3</span>
             </div>
+
+        </div>
+
+        {/* BLACK ARCHIVE UNIT (Зліва знизу) */}
+        <div className="absolute bottom-4 left-4 w-48 pointer-events-none">
+            <div className="text-[9px] text-red-900 mb-2 tracking-[0.3em] uppercase border-b border-red-900/30 flex justify-between">
+                <span>System_Trash</span>
+                <span className="animate-pulse">●</span>
+            </div>
+            
+            <AnimatePresence>
+                {rejectedWord && (
+                    <motion.div
+                        initial={{ y: -20, x: 20, opacity: 0, scale: 1.5 }}
+                        animate={{ y: 0, x: 0, opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, filter: "blur(10px)" }}
+                        transition={{ duration: 1.5, ease: "easeIn" }}
+                        className="text-red-500 font-bold text-xs mb-2 tracking-widest"
+                    >
+                        {rejectedWord} {'>>'} REJECTED
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Список в архіві */}
+            <div className="space-y-1 opacity-20">
+                {archive.map((w, i) => (
+                    <div key={i} className="text-[8px] text-zinc-500 line-through truncate uppercase">
+                        {w}
+                    </div>
+                ))}
+            </div>
         </div>
 
       {/* MAIN AREA */}
