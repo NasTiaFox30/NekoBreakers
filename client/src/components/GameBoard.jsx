@@ -88,26 +88,26 @@ const GameBoard = ({ socket, user, onLogout }) => {
             setAttempts(prev => [...prev, newAttempt].sort((a, b) => a.rank - b.rank));
         });
 
-    socket.on('display_typing', ({ id, isTyping }) => {
-      setTypingPlayers(prev => ({ ...prev, [id]: isTyping }));
-    });
+        socket.on('display_typing', ({ id, isTyping }) => {
+            setTypingPlayers(prev => ({ ...prev, [id]: isTyping }));
+        });
 
-    socket.on('game_won', ({ winner, word }) => {
-        setIsWon(true);
-        setLastWord(word);
-        
-        // ФЕЄРВЕРКИ
-        const duration = 5 * 1000;
-        const animationEnd = Date.now() + duration;
-        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+        socket.on('game_won', ({ winner, word }) => {
+            setIsWon(true);
+            setLastWord(word);
+            
+            // ФЕЄРВЕРКИ
+            const duration = 5 * 1000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
 
-        const interval = setInterval(function() {
-            const timeLeft = animationEnd - Date.now();
-            if (timeLeft <= 0) return clearInterval(interval);
-            const particleCount = 50 * (timeLeft / duration);
-            confetti({ ...defaults, particleCount, origin: { x: Math.random(), y: Math.random() - 0.2 } });
-        }, 250);
-    });
+            const interval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+                const particleCount = 50 * (timeLeft / duration);
+                confetti({ ...defaults, particleCount, origin: { x: Math.random(), y: Math.random() - 0.2 } });
+            }, 250);
+        });
 
     socket.on('room_restarted', ({ history }) => {
         setAttempts(history);
