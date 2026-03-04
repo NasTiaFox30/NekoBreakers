@@ -43,15 +43,18 @@ const GameBoard = ({ socket, user, onLogout }) => {
         socket.on('player_joined', (updatedPlayers) => setPlayers(updatedPlayers));
         
         socket.on('receive_history', (history) => {
-        const sorted = [...history].sort((a, b) => a.rank - b.rank);
-        setAttempts(sorted);
-        if (history.length > 0) {
-            const latest = history.reduce((prev, current) => 
-            (prev.timestamp > current.timestamp) ? prev : current
-            );
-            setLastWord(latest.word);
-        }
-    });
+            // Фільтруємо історію, щоб при завантаженні не показувати архівні слова (rank 0)
+            const validHistory = history.filter(h => h.rank !== 0);
+            const sorted = [...validHistory].sort((a, b) => a.rank - b.rank);
+            setAttempts(sorted);
+
+            if (validHistory.length > 0) {
+                const latest = validHistory.reduce((prev, current) => 
+                    (prev.timestamp > current.timestamp) ? prev : current
+                );
+                setLastWord(latest.word);
+            }
+        });
 
     socket.on('receive_guess', (newAttempt) => {
         console.log("Отримано нову спробу/підказку:", newAttempt);
