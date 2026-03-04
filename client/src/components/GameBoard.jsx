@@ -109,12 +109,14 @@ const GameBoard = ({ socket, user, onLogout }) => {
             }, 250);
         });
 
-    socket.on('room_restarted', ({ history }) => {
-        setAttempts(history);
-        setLastWord('********');
-        setIsWon(false);
-        setGuess('');
-    });
+        socket.on('room_restarted', ({ history }) => {
+            setAttempts([]);
+            setArchive([]);
+            setLastWord('********');
+            setLastHint(null);
+            setIsWon(false);
+            setGuess('');
+        });
 
     return () => {
       socket.off('player_joined');
