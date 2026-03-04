@@ -14,6 +14,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
     const [lastWord, setLastWord] = useState('********');
     const [lastHint, setLastHint] = useState(null);
     const [rejectedWord, setRejectedWord] = useState(null);
+    const [isAutoScrollLocked, setIsAutoScrollLocked] = useState(false);
     const [isWon, setIsWon] = useState(false);
   
     // Реф для контейнера списку спроб
@@ -37,6 +38,24 @@ const GameBoard = ({ socket, user, onLogout }) => {
             }
         }
     }, [attempts, lastWord, lastHint]); //При зміні списку, останнього слова, підказки
+
+    // Логіка блокування автоскролу після ручного скролу
+    useEffect(() => {
+        // Якщо скрол заблокований кнопкою "Show Top", нічого не робимо
+        if (isAutoScrollLocked) return;
+
+        if (scrollRef.current) {
+            const targetWord = lastHint || lastWord;
+            const elements = scrollRef.current.querySelectorAll('.bg-zinc-900\\/40');
+            const activeElement = Array.from(elements).find(el => 
+                el.textContent.includes(targetWord)
+            );
+
+            if (activeElement) {
+                activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }, [attempts, lastWord, lastHint, isAutoScrollLocked]);
 
     // Cокет-слухачі для оновлення стану гри
     useEffect(() => {
@@ -129,6 +148,16 @@ const GameBoard = ({ socket, user, onLogout }) => {
     }, [socket]);
 
 
+    const handleShowTop = () => {
+        if (scrollRef.current) {
+            // Скролимо в самий вгору
+            scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Блокуємо автоскрол на 5 секунд
+            setIsAutoScrollLocked(true);
+            setTimeout(() => setIsAutoScrollLocked(false), 5000);
+        }
+    };
 
     const handleRequestHint = () => {
         if (window.confirm("Використати системний дешифратор для підказки?")) {
@@ -233,6 +262,14 @@ const GameBoard = ({ socket, user, onLogout }) => {
                         className="text-[9px] border border-green-900/50 px-3 py-1 text-green-500/70 hover:text-green-400 hover:border-green-500 transition-all uppercase tracking-widest"
                     >
                         {'>'} Reboot_Level
+                    </button>
+                    <button 
+                        onClick={handleShowTop}
+                        className={`text-[8px] mt-1 uppercase tracking-widest px-2 py-0.5 border transition-all ${
+                            isAutoScrollLocked ? 'bg-white text-black border-white' : 'text-zinc-500 border-zinc-800 hover:text-white hover:border-zinc-500'
+                        }`}
+                    >
+                        {isAutoScrollLocked ? '[ Locked_on_Top ]' : 'View_Leaderboard'}
                     </button>
                 </div>
             </div>
