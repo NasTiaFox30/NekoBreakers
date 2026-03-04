@@ -18,23 +18,25 @@ const GameBoard = ({ socket, user, onLogout }) => {
     // Реф для контейнера списку спроб
     const scrollRef = useRef(null);
 
-    // Логіка автоматичного скролу при появі нового слова
+    // Логіка автоматичного скролу
     useEffect(() => {
         if (scrollRef.current) {
-        // Знаходимо елемент -lastWord
-        const activeElement = scrollRef.current.querySelector('.border-green-500\\/50');
-        if (activeElement) {
-            activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        }
-    }, [attempts, lastWord]); // Спрацьовує, коли змінюється список або останнє слово
+            const targetWord = lastHint || lastWord;
+            
+            // Знаходимо всі наші блоки спроб
+            const elements = scrollRef.current.querySelectorAll('.bg-zinc-900\\/40');
+            
+            // Шукаємо серед них той, де текст збігається з актуальним словом
+            const activeElement = Array.from(elements).find(el => 
+                el.textContent.includes(targetWord)
+            );
 
-    // Функція запиту підказки
-    const handleRequestHint = () => {
-        if (window.confirm("Використати системний дешифратор для підказки?")) {
-            socket.emit('request_hint', { roomId: user.roomId, player: user.username });
+            if (activeElement) {
+                activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
-    };
+    }, [attempts, lastWord, lastHint]); //При зміні списку, останнього слова, підказки
+
 
     useEffect(() => {
         socket.on('player_joined', (updatedPlayers) => setPlayers(updatedPlayers));
