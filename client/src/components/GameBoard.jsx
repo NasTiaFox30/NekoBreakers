@@ -118,13 +118,14 @@ const GameBoard = ({ socket, user, onLogout }) => {
             setGuess('');
         });
 
-    return () => {
-      socket.off('player_joined');
-      socket.off('receive_history');
-      socket.off('display_typing');
-      socket.off('receive_guess');
-      socket.off('game_won');
-    };
+        return () => {
+            socket.off('player_joined');
+            socket.off('receive_history');
+            socket.off('display_typing');
+            socket.off('receive_guess');
+            socket.off('game_won');
+            socket.off('room_restarted');
+        };
     }, [socket]);
 
     const handleSubmit = (e) => {
