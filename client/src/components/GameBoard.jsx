@@ -128,6 +128,14 @@ const GameBoard = ({ socket, user, onLogout }) => {
         };
     }, [socket]);
 
+
+
+    const handleRequestHint = () => {
+        if (window.confirm("Використати системний дешифратор для підказки?")) {
+            socket.emit('request_hint', { roomId: user.roomId, player: user.username });
+        }
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!guess.trim()) return;
