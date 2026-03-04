@@ -38,7 +38,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
         }
     }, [attempts, lastWord, lastHint]); //При зміні списку, останнього слова, підказки
 
-
+    // Cокет-слухачі для оновлення стану гри
     useEffect(() => {
         socket.on('player_joined', (updatedPlayers) => setPlayers(updatedPlayers));
         
