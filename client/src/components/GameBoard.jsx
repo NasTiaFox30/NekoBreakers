@@ -56,21 +56,37 @@ const GameBoard = ({ socket, user, onLogout }) => {
             }
         });
 
-    socket.on('receive_guess', (newAttempt) => {
-        console.log("Отримано нову спробу/підказку:", newAttempt);
-        setLastWord(newAttempt.word);
-        
-        // Встановлюємо, хто саме вистрілив кодом
-        setLastSubmiter({
-        username: newAttempt.player,
-        timestamp: Date.now()
-        });
+        socket.on('receive_guess', (newAttempt) => {
+            console.log("Отримано нову спробу/підказку:", newAttempt);
 
-        setAttempts(prev => {
-        const updated = [...prev, newAttempt];
-        return updated.sort((a, b) => a.rank - b.rank);
+            // ЛОГІКА ЧОРНОГО АРХІВУ (якщо ранг 0)
+            if (newAttempt.rank === 0) {
+                setRejectedWord(newAttempt.word);
+                
+                setTimeout(() => {
+                    setArchive(prev => [newAttempt.word, ...prev].slice(0, 5)); 
+                    setRejectedWord(null);
+                }, 3000);
+                
+                return; // КРИТИЧНО: виходимо, щоб не додавати в attempts
+            }
+
+            // ЛОГІКА ГОЛОВНОГО СПИСКУ (якщо ранг > 0)
+            if (newAttempt.player === "SYSTEM_DECODER") {
+                setLastHint(newAttempt.word);
+            } else {
+                setLastWord(newAttempt.word);
+                setLastHint(null);
+            }
+            
+            // Встановлюємо, хто саме вистрілив кодом
+            setLastSubmiter({
+                username: newAttempt.player,
+                timestamp: Date.now()
+            });
+
+            setAttempts(prev => [...prev, newAttempt].sort((a, b) => a.rank - b.rank));
         });
-    });
 
     socket.on('display_typing', ({ id, isTyping }) => {
       setTypingPlayers(prev => ({ ...prev, [id]: isTyping }));
