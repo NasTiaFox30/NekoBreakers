@@ -135,7 +135,27 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('receive_guess', attempt);
 
         if (rank === 1) {
+            const room = rooms[roomId];
+            room.isRestarting = true; // Блокуємо нові введення
+
+            // Розкриваємо слово (перемога)
+            io.to(roomId).emit('reveal_word', { 
+                word: cleanWord, 
+                isWin: true 
+            });
+
+            // Подія перемоги (конфеті)
             io.to(roomId).emit('game_won', { winner: player, word: cleanWord });
+
+            // Авто-перехід
+            setTimeout(async () => {
+                const newWord = await fetchRandomWord();
+                room.targetWord = newWord;
+                room.history = [];
+                room.restartVotes = new Set();
+                room.isRestarting = false;
+                io.to(roomId).emit('room_restarted', { history: [] });
+            }, 7000);
         }
     });
 
