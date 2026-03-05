@@ -179,7 +179,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
     };
 
     const handleRestart = () => {
-        socket.emit('restart_room', { roomId: user.roomId });
+        socket.emit('restart_room', { roomId: user.roomId, username: user.username });
     };
 
   const handleLeave = () => {
