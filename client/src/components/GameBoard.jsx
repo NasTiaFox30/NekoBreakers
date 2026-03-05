@@ -184,7 +184,14 @@ const GameBoard = ({ socket, user, onLogout }) => {
     };
 
     const handleRestart = () => {
-        socket.emit('restart_room', { roomId: user.roomId, username: user.username });
+        // Перевірка, чи користувач вже голосував
+        const hasVoted = restartStatus?.voters?.includes(user.username);
+
+        if (hasVoted) {
+            socket.emit('cancel_restart', { roomId: user.roomId, username: user.username });
+        } else {
+            socket.emit('restart_room', { roomId: user.roomId, username: user.username });
+        }
     };
 
   const handleLeave = () => {
