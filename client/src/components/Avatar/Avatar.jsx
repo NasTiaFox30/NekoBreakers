@@ -27,69 +27,72 @@ const Avatar = ({ isTyping, isMain, submitted, username, isMobile }) => {
   }, []);
 
   return (
-    <div className={`relative flex flex-col items-center transition-transform duration-500 ${isMain ? 'scale-130' : 'scale-95'}`}>
-      {/* Голова */}
-      <div className="w-32 h-32">
-        <Head 
-          lefteye={expressions.lefteye} 
-          righteye={expressions.righteye} 
-          mouth={expressions.mouth} 
-          isTyping={isTyping}
-          showExclamation={showExclamation}
-        />
-      </div>
+    <div className={`relative flex items-center gap-3 transition-transform duration-500 ${isMain ? 'scale-130' : 'scale-95'}`}>
+      {/* Аватар */}
+      <div className="flex flex-col items-center mb-3">
+        {/* Голова */}
+        <div className="w-32 h-32">
+          <Head 
+            lefteye={expressions.lefteye} 
+            righteye={expressions.righteye} 
+            mouth={expressions.mouth} 
+            isTyping={isTyping}
+            showExclamation={showExclamation}
+          />
+        </div>
 
-      {/* Лапи та девайс */}
-      <div className="flex gap-1 -mt-10 z-10">
-        <Paw isTyping={isTyping} side="left" />
-        <Paw isTyping={isTyping} side="right" />
-      </div>
+        {/* Лапи та девайс */}
+        <div className="flex gap-1 -mt-10 z-10">
+          <Paw isTyping={isTyping} side="left" />
+          <Paw isTyping={isTyping} side="right" />
+        </div>
 
-      {/* DEVICE VISUALIZATION */}
-      <div className="relative -mt-3 z-0" style={{ perspective: '300px' }}>
-        {!isMobile ? (
-          /* KEYBOARD */
-          <motion.div
-            className="w-28 h-6 bg-zinc-900 border-b border-zinc-700 rounded-sm shadow-2xl origin-bottom"
-            style={{ background: 'linear-gradient(to bottom, #18181b 0%, #111114 40%, #09090b 100%)' }}
-          >
-            <div className="absolute inset-x-2 top-1 space-y-1 opacity-60">
-              <div className="h-1 flex gap-1 px-4">
-                <div className="flex-1 bg-zinc-700 rounded-sm border-b border-black shadow-inner"></div>
+        {/* DEVICE VISUALIZATION */}
+        <div className="relative -mt-3 z-0" style={{ perspective: '300px' }}>
+          {!isMobile ? (
+            /* KEYBOARD */
+            <motion.div
+              className="w-28 h-6 bg-zinc-900 border-b border-zinc-700 rounded-sm shadow-2xl origin-bottom"
+              style={{ background: 'linear-gradient(to bottom, #18181b 0%, #111114 40%, #09090b 100%)' }}
+            >
+              <div className="absolute inset-x-2 top-1 space-y-1 opacity-60">
+                <div className="h-1 flex gap-1 px-4">
+                  <div className="flex-1 bg-zinc-700 rounded-sm border-b border-black shadow-inner"></div>
+                </div>
+                <div className="h-1 flex gap-1">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="flex-1 bg-zinc-800 rounded-sm border-b border-black shadow-inner"></div>
+                  ))}
+                </div>
               </div>
-              <div className="h-1 flex gap-1">
-                {[...Array(8)].map((_, i) => (
-                  <div key={i} className="flex-1 bg-zinc-800 rounded-sm border-b border-black shadow-inner"></div>
-                ))}
-              </div>
-            </div>
-            <div className="absolute inset-0 bg-white/5 blur-sm"></div>
-          </motion.div>
-        ) : (
-          /* SMARTPHONE */
-          <motion.div
-            className="w-12 h-15 bg-zinc-900 border-2 border-zinc-700 rounded-lg shadow-2xl origin-bottom overflow-hidden p-1"
-            style={{ transform: 'rotateX(25deg)' }}
-          >
-             {/* Екран смартфона з ASCII кодом */}
-             <div className="w-full h-full bg-zinc-950 rounded-md relative overflow-hidden flex flex-col justify-end p-1">
-                <div className="w-full h-[2px] bg-green-500/30 mb-1 animate-pulse"></div>
-                <div className="w-2/3 h-[1px] bg-white/20 mb-1"></div>
-                <div className="w-full h-[1px] bg-white/10"></div>
-                <div className="absolute inset-0 bg-gradient-to-tr from-green-500/5 to-transparent"></div>
-             </div>
-          </motion.div>
-        )}
-        <div className="absolute -bottom-2 inset-x-0 h-4 bg-black/80 blur-md -z-10 rounded-full mx-auto" style={{width: isMobile ? '40px' : '100px'}}></div>
-      </div>
+              <div className="absolute inset-0 bg-white/5 blur-sm"></div>
+            </motion.div>
+          ) : (
+            /* SMARTPHONE */
+            <motion.div
+              className="w-12 h-15 bg-zinc-900 border-2 border-zinc-700 rounded-lg shadow-2xl origin-bottom overflow-hidden p-1"
+              style={{ transform: 'rotateX(25deg)' }}
+            >
+               {/* Екран смартфона з ASCII кодом */}
+               <div className="w-full h-full bg-zinc-950 rounded-md relative overflow-hidden flex flex-col justify-end p-1">
+                  <div className="w-full h-[2px] bg-green-500/30 mb-1 animate-pulse"></div>
+                  <div className="w-2/3 h-[1px] bg-white/20 mb-1"></div>
+                  <div className="w-full h-[1px] bg-white/10"></div>
+                  <div className="absolute inset-0 bg-gradient-to-tr from-green-500/5 to-transparent"></div>
+               </div>
+            </motion.div>
+          )}
+          <div className="absolute -bottom-2 inset-x-0 h-4 bg-black/80 blur-md -z-10 rounded-full mx-auto" style={{width: isMobile ? '40px' : '100px'}}></div>
+        </div>
 
-      {/* Нік */}
-      <div className="mt-2 text-[10px] uppercase tracking-tighter text-zinc-600 font-mono">
-        {isMain ? (
-          <span className="text-white font-bold tracking-widest pb-0.5">_YOU</span>
-        ) : (
-          <span>{username || "Unknown Cat"}</span>
-        )}
+        {/* Нік */}
+        <div className="text-[10px] uppercase tracking-tighter text-zinc-600 font-mono">
+          {isMain ? (
+            <span className="text-white font-bold tracking-widest pb-0.5">_YOU</span>
+          ) : (
+            <span>{username || "Unknown Cat"}</span>
+          )}
+        </div>
       </div>
     </div>
   );
