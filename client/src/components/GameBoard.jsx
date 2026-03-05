@@ -114,19 +114,20 @@ const GameBoard = ({ socket, user, onLogout }) => {
 
         socket.on('game_won', ({ winner, word }) => {
             setIsWon(true);
-            setLastWord(word);
             
-            // ФЕЄРВЕРКИ
-            const duration = 5 * 1000;
-            const animationEnd = Date.now() + duration;
-            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+            // Kонфеті
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 200 };
+            confetti({ ...defaults, particleCount: 150, origin: { x: 0.5, y: 0.5 } });
+        });
 
-            const interval = setInterval(function() {
-                const timeLeft = animationEnd - Date.now();
-                if (timeLeft <= 0) return clearInterval(interval);
-                const particleCount = 50 * (timeLeft / duration);
-                confetti({ ...defaults, particleCount, origin: { x: Math.random(), y: Math.random() - 0.2 } });
-            }, 250);
+        socket.on('restart_progress', (data) => {
+            setRestartStatus(data);
+        });
+
+        socket.on('reveal_word', ({ word, isWin }) => {
+            setRevealedWord(word);
+            if (isWin) setIsWon(true);
+            setRestartStatus(null); 
         });
 
         socket.on('room_restarted', () => {
