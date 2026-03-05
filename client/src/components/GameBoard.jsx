@@ -315,43 +315,44 @@ const GameBoard = ({ socket, user, onLogout }) => {
         <div ref={scrollRef} className="flex-1 max-w-xl h-[450px] overflow-y-auto custom-scrollbar flex flex-col gap-3 px-4 py-2 scroll-smooth">
           <AnimatePresence initial={false}>
             {attempts.map((att) => (
-              <motion.div 
+            <motion.div 
                 layout
+                id={`attempt-${att.timestamp}`}
                 key={att.timestamp}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className={`bg-zinc-900/40 border p-2 font-mono relative transition-colors duration-500 ${
-                att.player === "SYSTEM_DECODER" 
-                    ? "border-blue-500/50 bg-blue-900/10 shadow-[0_0_15px_rgba(59,130,246,0.2)]"
-                    : att.word === lastWord 
-                    ? "border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.2)]" 
-                    : "border-zinc-800"
+                className={`bg-zinc-900/40 border p-1.5 font-mono relative transition-colors duration-500 ${
+                    att.player === "SYSTEM_DECODER" 
+                        ? "border-blue-500/50 bg-blue-900/10 shadow-[0_0_15px_rgba(59,130,246,0.2)]"
+                        : att.word === lastWord 
+                            ? "border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.2)]" 
+                            : "border-zinc-800"
                 }`}
-              >
-                <div className="flex justify-between text-[9px] uppercase tracking-widest mb-1">
-                <span className={att.player === "SYSTEM_DECODER" ? "text-blue-400 font-bold" : "text-zinc-500"}>
-                    {att.player === "SYSTEM_DECODER" ? "!!! SYSTEM_DECODER_HINT !!!" : `Source: ${att.player}`}
-                </span>
-                <span className={att.rank <= 500 ? "text-green-400" : "text-zinc-400"}>
-                    Rank: {att.rank}
-                  </span>
+            >
+                <div className="flex justify-between text-[8px] uppercase tracking-widest mb-0.2 opacity-70">
+                    <span className={att.player === "SYSTEM_DECODER" ? "text-blue-400 font-bold" : "text-zinc-500"}>
+                        {att.player === "SYSTEM_DECODER" ? "!!! SYSTEM_DECODER_HINT !!!" : `Source: ${att.player}`}
+                    </span>
+                    <span className={att.rank <= 500 ? "text-green-400" : "text-zinc-400"}>
+                        Rank: {att.rank}
+                    </span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-bold tracking-widest text-white min-w-[100px]">
-                    {att.word}
-                  </span>
-                  <div className="flex-1 h-1.5 bg-zinc-950 border border-zinc-800 relative overflow-hidden">
-                    <motion.div 
-                      layout
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.max(5, 100 - (att.rank / 50))}%` }}
-                      className={`h-full ${att.rank <= 500 ? "bg-green-500" : "bg-zinc-600"}`}
-                    />
-                  </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold tracking-widest text-white min-w-[80px]">
+                        {att.word}
+                    </span>
+                    <div className="flex-1 h-1 bg-zinc-950 border border-zinc-800 relative overflow-hidden">
+                        <motion.div 
+                            layout
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.max(5, 100 - (att.rank / 100))}%` }}
+                            className={`h-full ${att.rank <= 500 ? "bg-green-500" : "bg-zinc-700"}`}
+                        />
+                    </div>
                 </div>
-              </motion.div>
+            </motion.div>
             ))}
           </AnimatePresence>
         </div>
