@@ -138,6 +138,8 @@ const GameBoard = ({ socket, user, onLogout }) => {
             setLastHint(null);
             setIsWon(false);
             setGuess('');
+            setRevealedWord(null);
+            setRestartStatus(null);
         });
 
         return () => {
