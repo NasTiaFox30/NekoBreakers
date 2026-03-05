@@ -16,6 +16,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
     const [lastRank, setLastRank] = useState(null);
     const [rejectedWord, setRejectedWord] = useState(null);
     const [isWon, setIsWon] = useState(false);
+    const [winnerName, setWinnerName] = useState(null);
     const [restartStatus, setRestartStatus] = useState(null); // {votes, total}
     const [revealedWord, setRevealedWord] = useState(null);
   
