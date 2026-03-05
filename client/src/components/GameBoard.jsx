@@ -88,10 +88,12 @@ const GameBoard = ({ socket, user, onLogout }) => {
             }
 
             // ЛОГІКА ГОЛОВНОГО СПИСКУ (якщо ранг > 0)
+            setLastWord(newAttempt.word);
+            setLastRank(newAttempt.rank); 
+
             if (newAttempt.player === "SYSTEM_DECODER") {
                 setLastHint(newAttempt.word);
             } else {
-                setLastWord(newAttempt.word);
                 setLastHint(null);
             }
             
