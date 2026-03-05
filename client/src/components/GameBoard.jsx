@@ -19,26 +19,19 @@ const GameBoard = ({ socket, user, onLogout }) => {
     // Реф для контейнера списку спроб
     const scrollRef = useRef(null);
 
-    // Логіка автоматичного скролу
+    // Слухач клавіші TAB
     useEffect(() => {
-        if (scrollRef.current) {
-            const targetWord = lastHint || lastWord;
-            
-            // Знаходимо всі наші блоки спроб
-            const elements = scrollRef.current.querySelectorAll('.bg-zinc-900\\/40');
-            
-            // Шукаємо серед них той, де текст збігається з актуальним словом
-            const activeElement = Array.from(elements).find(el => 
-                el.textContent.includes(targetWord)
-            );
-
-            if (activeElement) {
-                activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const handleKeyDown = (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                handleShowTop();
             }
-        }
-    }, [attempts, lastWord, lastHint]); //При зміні списку, останнього слова, підказки
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
-    // Логіка блокування автоскролу після ручного скролу
+    // ЛОГІКА СКРОЛУ: Фокус на 3 сек -> Повернення на ТОП
     useEffect(() => {
         // Якщо скрол заблокований кнопкою "Show Top", нічого не робимо
         if (isAutoScrollLocked) return;
