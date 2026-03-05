@@ -73,7 +73,6 @@ const GameBoard = ({ socket, user, onLogout }) => {
         });
 
         socket.on('receive_guess', (newAttempt) => {
-            console.log("Отримано нову спробу/підказку:", newAttempt);
 
             // ЛОГІКА ЧОРНОГО АРХІВУ (якщо ранг 0)
             if (newAttempt.rank === 0) {
