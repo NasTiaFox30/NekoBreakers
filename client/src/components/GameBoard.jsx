@@ -234,14 +234,30 @@ const GameBoard = ({ socket, user, onLogout }) => {
             <div className="flex flex-col items-center gap-4">
                 <div className="flex items-center gap-6">
                     <span className="text-zinc-800 font-black text-3xl">[{attempts.length}]</span>
-                    <motion.span 
-                        key={lastWord}
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-zinc-200 text-3xl font-light tracking-[0.5em]"
-                    >
-                        {lastWord}
-                    </motion.span>
+                    <div className="flex items-center">
+                        {/* ОСТАННЄ СЛОВО*/}
+                        <motion.span 
+                            key={lastWord}
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-zinc-200 text-3xl font-light tracking-[0.5em] uppercase"
+                        >
+                            {lastWord}
+                        </motion.span>
+                        {/* РАНГ */}
+                        <AnimatePresence>
+                            {lastRank && (
+                                <motion.span 
+                                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                                    className={`text-[14px] tracking-[0.3em] font-bold mt-1 border-b ${
+                                        lastRank <= 500 ? 'text-green-500' : 'text-zinc-500'
+                                    }`}
+                                >
+                                    {lastRank}{'★'}
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
 
                 {/* NEW SYSTEM BUTTONS */}
