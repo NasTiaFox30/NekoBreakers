@@ -234,6 +234,31 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('cancel_restart', ({ roomId, username }) => {
+        if (!rooms[roomId]) return;
+        
+        const room = rooms[roomId];
+        
+        // Якщо рестарт вже в процесі, ігноруємо скасування
+        if (room.isRestarting) return;
+
+        if (room.restartVotes) {
+            room.restartVotes.delete(username);
+            
+            const totalPlayers = room.players.length;
+            const currentVotes = room.restartVotes.size;
+
+            // Оновлюємо статус голосування
+            io.to(roomId).emit('restart_progress', {
+                votes: currentVotes,
+                total: totalPlayers,
+                voters: Array.from(room.restartVotes)
+            });
+            
+            console.log(`Гравець ${username} скасував голос за рестарт у ${roomId}`);
+        }
+    });
+
     socket.on('leave_room', () => {
         handleLeave(socket.id);
         socket.disconnect(); // Розірвати з'єднання з клієнтом після виходу
