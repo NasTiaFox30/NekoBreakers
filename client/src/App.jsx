@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import Lobby from './components/Lobby';
 import GameBoard from './components/GameBoard';
-const APP_VERSION = import.meta.env.VITE_APP_VERSION;
 
 // const socket = io(window.location.hostname === 'localhost' 
 //   ? 'http://localhost:3000' 
@@ -54,8 +53,10 @@ function App() {
       ) : (
         <GameBoard socket={socket} user={user} onLogout={handleLogout} />
       )}
-      <div className='absolute bottom-4 right-4 text-sm text-gray-500'>
-        NekoBreakers V{APP_VERSION} &copy;
+
+      {/* VERSION */}
+      <div className='absolute bottom-4 right-4 text-[10px] font-mono text-zinc-600 uppercase tracking-widest pointer-events-none select-none'>
+        NekoBreakers V{__APP_VERSION__} &copy;
       </div>
     </div>
   );
