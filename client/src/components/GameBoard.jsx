@@ -13,49 +13,50 @@ const GameBoard = ({ socket, user, onLogout }) => {
     const [lastSubmit, setLastSubmit] = useState(0);
     const [lastWord, setLastWord] = useState('********');
     const [lastHint, setLastHint] = useState(null);
+    const [lastRank, setLastRank] = useState(null);
     const [rejectedWord, setRejectedWord] = useState(null);
-    const [isAutoScrollLocked, setIsAutoScrollLocked] = useState(false);
     const [isWon, setIsWon] = useState(false);
+    const [winnerName, setWinnerName] = useState(null);
+    const [restartStatus, setRestartStatus] = useState(null); // {votes, total}
+    const [revealedWord, setRevealedWord] = useState(null);
   
     // Реф для контейнера списку спроб
     const scrollRef = useRef(null);
 
-    // Логіка автоматичного скролу
+    // Слухач клавіші TAB
     useEffect(() => {
-        if (scrollRef.current) {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                handleShowTop();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
+    // ЛОГІКА СКРОЛУ: Фокус на 3 сек -> Повернення на ТОП
+    useEffect(() => {
+        if (scrollRef.current && (lastWord !== '********' || lastHint)) {
             const targetWord = lastHint || lastWord;
-            
-            // Знаходимо всі наші блоки спроб
             const elements = scrollRef.current.querySelectorAll('.bg-zinc-900\\/40');
-            
-            // Шукаємо серед них той, де текст збігається з актуальним словом
             const activeElement = Array.from(elements).find(el => 
                 el.textContent.includes(targetWord)
             );
 
             if (activeElement) {
+                // Скролимо до нового слова/підказки
                 activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Повертаємось на початок
+                const returnTimer = setTimeout(() => {
+                    handleShowTop();
+                }, 3000);
+
+                return () => clearTimeout(returnTimer);
             }
         }
     }, [attempts, lastWord, lastHint]); //При зміні списку, останнього слова, підказки
-
-    // Логіка блокування автоскролу після ручного скролу
-    useEffect(() => {
-        // Якщо скрол заблокований кнопкою "Show Top", нічого не робимо
-        if (isAutoScrollLocked) return;
-
-        if (scrollRef.current) {
-            const targetWord = lastHint || lastWord;
-            const elements = scrollRef.current.querySelectorAll('.bg-zinc-900\\/40');
-            const activeElement = Array.from(elements).find(el => 
-                el.textContent.includes(targetWord)
-            );
-
-            if (activeElement) {
-                activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
-    }, [attempts, lastWord, lastHint, isAutoScrollLocked]);
 
     // Cокет-слухачі для оновлення стану гри
     useEffect(() => {
@@ -76,7 +77,6 @@ const GameBoard = ({ socket, user, onLogout }) => {
         });
 
         socket.on('receive_guess', (newAttempt) => {
-            console.log("Отримано нову спробу/підказку:", newAttempt);
 
             // ЛОГІКА ЧОРНОГО АРХІВУ (якщо ранг 0)
             if (newAttempt.rank === 0) {
@@ -91,10 +91,12 @@ const GameBoard = ({ socket, user, onLogout }) => {
             }
 
             // ЛОГІКА ГОЛОВНОГО СПИСКУ (якщо ранг > 0)
+            setLastWord(newAttempt.word);
+            setLastRank(newAttempt.rank); 
+
             if (newAttempt.player === "SYSTEM_DECODER") {
                 setLastHint(newAttempt.word);
             } else {
-                setLastWord(newAttempt.word);
                 setLastHint(null);
             }
             
@@ -113,28 +115,36 @@ const GameBoard = ({ socket, user, onLogout }) => {
 
         socket.on('game_won', ({ winner, word }) => {
             setIsWon(true);
-            setLastWord(word);
             
-            // ФЕЄРВЕРКИ
-            const duration = 5 * 1000;
-            const animationEnd = Date.now() + duration;
-            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
-            const interval = setInterval(function() {
-                const timeLeft = animationEnd - Date.now();
-                if (timeLeft <= 0) return clearInterval(interval);
-                const particleCount = 50 * (timeLeft / duration);
-                confetti({ ...defaults, particleCount, origin: { x: Math.random(), y: Math.random() - 0.2 } });
-            }, 250);
+            // Kонфеті
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 200 };
+            confetti({ ...defaults, particleCount: 150, origin: { x: 0.5, y: 0.5 } });
         });
 
-        socket.on('room_restarted', ({ history }) => {
+        socket.on('restart_progress', (data) => {
+            setRestartStatus(data);
+        });
+
+        socket.on('reveal_word', ({ word, isWin, winnerName }) => {
+            setRevealedWord(word);
+            if (isWin) {
+                setIsWon(true);
+                setWinnerName(winnerName);
+            }
+            setRestartStatus(null); 
+        });
+
+        socket.on('room_restarted', () => {
             setAttempts([]);
             setArchive([]);
             setLastWord('********');
+            setLastRank(null);
             setLastHint(null);
             setIsWon(false);
+            setWinnerName(null);
             setGuess('');
+            setRevealedWord(null);
+            setRestartStatus(null);
         });
 
         return () => {
@@ -150,12 +160,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
 
     const handleShowTop = () => {
         if (scrollRef.current) {
-            // Скролимо в самий вгору
             scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-            
-            // Блокуємо автоскрол на 5 секунд
-            setIsAutoScrollLocked(true);
-            setTimeout(() => setIsAutoScrollLocked(false), 5000);
         }
     };
 
@@ -179,7 +184,14 @@ const GameBoard = ({ socket, user, onLogout }) => {
     };
 
     const handleRestart = () => {
-        socket.emit('restart_room', { roomId: user.roomId });
+        // Перевірка, чи користувач вже голосував
+        const hasVoted = restartStatus?.voters?.includes(user.username);
+
+        if (hasVoted) {
+            socket.emit('cancel_restart', { roomId: user.roomId, username: user.username });
+        } else {
+            socket.emit('restart_room', { roomId: user.roomId, username: user.username });
+        }
     };
 
   const handleLeave = () => {
@@ -196,28 +208,72 @@ const GameBoard = ({ socket, user, onLogout }) => {
   return (
     <div className="min-h-screen bg-black text-white font-mono flex flex-col p-6 overflow-hidden select-none">
 
-        {/* YOU DID IT OVERLAY */}
+        {/* REVEAL OVERLAY (Win/Restart) */}
         <AnimatePresence>
-            {isWon && (
+            {revealedWord && (
                 <motion.div 
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                    className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/80 backdrop-blur-bg"
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    exit={{ opacity: 0 }}
+                    className={`fixed inset-0 z-[150] flex flex-col items-center justify-center backdrop-blur-xl transition-colors duration-1000 ${
+                        isWon ? 'bg-green-950/90' : 'bg-red-950/90'
+                    }`}
                 >
-                    <motion.h1 
-                        initial={{ scale: 0.5, y: 50 }} animate={{ scale: 1, y: 0 }}
-                        className="text-6xl font-black text-green-500 tracking-[0.3em] mb-8"
-                    >
-                        YOU DID IT!
-                    </motion.h1>
-                    <button 
-                        onClick={handleRestart}
-                        className="px-8 py-3 border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-black transition-all font-bold tracking-widest uppercase"
-                    >
-                        [ Reboot System / Restart ]
-                    </button>
+                    <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="text-center">
+                        <div className={`${isWon ? 'text-green-500' : 'text-red-500'} text-xs tracking-[0.6em] mb-2 uppercase animate-pulse font-black`}>
+                            {isWon ? '>>> ACCESS_GRANTED / TARGET_ACQUIRED <<<' : '>>> SYSTEM_OVERRIDE / DATA_REVEALED <<<'}
+                        </div>
+                        
+                        {/* переможець */}
+                        <AnimatePresence>
+                            {isWon && winnerName && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-white text-lg font-bold mb-4 tracking-widest"
+                                >
+                                    CONGRATULATIONS, <span className="text-green-400">@{winnerName}</span>!
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                        
+                        <div className={`text-7xl md:text-8xl font-black text-white tracking-[0.2em] mb-10 bg-white/5 px-12 py-6 border-y ${
+                            isWon ? 'border-green-500/50 shadow-[0_0_50px_rgba(34,197,94,0.4)]' : 'border-red-500/50'
+                        } uppercase`}>
+                            {revealedWord}
+                        </div>
+
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="w-64 h-1 bg-white/10 overflow-hidden rounded-full relative">
+                                <motion.div 
+                                    initial={{ x: "-100%" }} 
+                                    animate={{ x: "0%" }}
+                                    transition={{ duration: isWon ? 7 : 5, ease: "linear" }}
+                                    className={`absolute inset-0 ${isWon ? 'bg-green-500' : 'bg-red-500'}`}
+                                />
+                            </div>
+                            <span className="text-[10px] text-white/40 tracking-[0.3em] uppercase font-mono">
+                                {isWon ? 'Syncing next security layer...' : 'Emergency reboot in progress...'}
+                            </span>
+                        </div>
+                    </motion.div>
                 </motion.div>
             )}
         </AnimatePresence>
+
+        {/* СТАТУС ГОЛОСУВАННЯ */}
+        <div className="h-4">
+            <AnimatePresence>
+                {restartStatus && restartStatus.votes > 0 && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                        className="text-[10px] text-orange-500 animate-pulse tracking-widest text-center"
+                    >
+                        REBOOT_VOTES: {restartStatus.votes} / {restartStatus.total} CONFIRMED...
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
       
         {/* HEADER */}
         <div className="border-b border-zinc-900 pb-4 mb-6 flex justify-between items-end">
@@ -239,14 +295,30 @@ const GameBoard = ({ socket, user, onLogout }) => {
             <div className="flex flex-col items-center gap-4">
                 <div className="flex items-center gap-6">
                     <span className="text-zinc-800 font-black text-3xl">[{attempts.length}]</span>
-                    <motion.span 
-                        key={lastWord}
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-zinc-200 text-3xl font-light tracking-[0.5em]"
-                    >
-                        {lastWord}
-                    </motion.span>
+                    <div className="flex items-center">
+                        {/* ОСТАННЄ СЛОВО*/}
+                        <motion.span 
+                            key={lastWord}
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-zinc-200 text-3xl font-light tracking-[0.5em] uppercase"
+                        >
+                            {lastWord}
+                        </motion.span>
+                        {/* РАНГ */}
+                        <AnimatePresence>
+                            {lastRank && (
+                                <motion.span 
+                                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                                    className={`text-[14px] tracking-[0.3em] font-bold mt-1 border-b ${
+                                        lastRank <= 500 ? 'text-green-500' : 'text-zinc-500'
+                                    }`}
+                                >
+                                    {lastRank}{'★'}
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
 
                 {/* NEW SYSTEM BUTTONS */}
@@ -257,19 +329,17 @@ const GameBoard = ({ socket, user, onLogout }) => {
                     >
                         {'>'} Decipher_Hint
                     </button>
+
                     <button 
                         onClick={handleRestart}
-                        className="text-[9px] border border-green-900/50 px-3 py-1 text-green-500/70 hover:text-green-400 hover:border-green-500 transition-all uppercase tracking-widest"
-                    >
-                        {'>'} Reboot_Level
-                    </button>
-                    <button 
-                        onClick={handleShowTop}
-                        className={`text-[8px] mt-1 uppercase tracking-widest px-2 py-0.5 border transition-all ${
-                            isAutoScrollLocked ? 'bg-white text-black border-white' : 'text-zinc-500 border-zinc-800 hover:text-white hover:border-zinc-500'
+                        disabled={isWon || revealedWord}
+                        className={`text-[9px] border px-3 py-1 transition-all uppercase tracking-widest ${
+                            restartStatus?.voters?.includes(user.username)
+                                ? "border-orange-500 text-orange-500 hover:bg-orange-500/10"
+                                : "border-green-900/50 text-green-500/70 hover:text-green-400 hover:border-green-500"
                         }`}
                     >
-                        {isAutoScrollLocked ? '[ Locked_on_Top ]' : 'View_Leaderboard'}
+                        {restartStatus?.voters?.includes(user.username) ? '[ Cancel_Reboot ]' : '> Reboot_Level'}
                     </button>
                 </div>
             </div>
@@ -331,43 +401,44 @@ const GameBoard = ({ socket, user, onLogout }) => {
         <div ref={scrollRef} className="flex-1 max-w-xl h-[450px] overflow-y-auto custom-scrollbar flex flex-col gap-3 px-4 py-2 scroll-smooth">
           <AnimatePresence initial={false}>
             {attempts.map((att) => (
-              <motion.div 
+            <motion.div 
                 layout
+                id={`attempt-${att.timestamp}`}
                 key={att.timestamp}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className={`bg-zinc-900/40 border p-2 font-mono relative transition-colors duration-500 ${
-                att.player === "SYSTEM_DECODER" 
-                    ? "border-blue-500/50 bg-blue-900/10 shadow-[0_0_15px_rgba(59,130,246,0.2)]"
-                    : att.word === lastWord 
-                    ? "border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.2)]" 
-                    : "border-zinc-800"
+                className={`bg-zinc-900/40 border p-1.5 font-mono relative transition-colors duration-500 ${
+                    att.player === "SYSTEM_DECODER" 
+                        ? "border-blue-500/50 bg-blue-900/10 shadow-[0_0_15px_rgba(59,130,246,0.2)]"
+                        : att.word === lastWord 
+                            ? "border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.2)]" 
+                            : "border-zinc-800"
                 }`}
-              >
-                <div className="flex justify-between text-[9px] uppercase tracking-widest mb-1">
-                <span className={att.player === "SYSTEM_DECODER" ? "text-blue-400 font-bold" : "text-zinc-500"}>
-                    {att.player === "SYSTEM_DECODER" ? "!!! SYSTEM_DECODER_HINT !!!" : `Source: ${att.player}`}
-                </span>
-                <span className={att.rank <= 500 ? "text-green-400" : "text-zinc-400"}>
-                    Rank: {att.rank}
-                  </span>
+            >
+                <div className="flex justify-between text-[8px] uppercase tracking-widest mb-0.2 opacity-70">
+                    <span className={att.player === "SYSTEM_DECODER" ? "text-blue-400 font-bold" : "text-zinc-500"}>
+                        {att.player === "SYSTEM_DECODER" ? "!!! SYSTEM_DECODER_HINT !!!" : `Source: ${att.player}`}
+                    </span>
+                    <span className={att.rank <= 500 ? "text-green-400" : "text-zinc-400"}>
+                        Rank: {att.rank}
+                    </span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-bold tracking-widest text-white min-w-[100px]">
-                    {att.word}
-                  </span>
-                  <div className="flex-1 h-1.5 bg-zinc-950 border border-zinc-800 relative overflow-hidden">
-                    <motion.div 
-                      layout
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.max(5, 100 - (att.rank / 50))}%` }}
-                      className={`h-full ${att.rank <= 500 ? "bg-green-500" : "bg-zinc-600"}`}
-                    />
-                  </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold tracking-widest text-white min-w-[80px]">
+                        {att.word}
+                    </span>
+                    <div className="flex-1 h-1 bg-zinc-950 border border-zinc-800 relative overflow-hidden">
+                        <motion.div 
+                            layout
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.max(5, 100 - (att.rank / 100))}%` }}
+                            className={`h-full ${att.rank <= 500 ? "bg-green-500" : "bg-zinc-700"}`}
+                        />
+                    </div>
                 </div>
-              </motion.div>
+            </motion.div>
             ))}
           </AnimatePresence>
         </div>
@@ -386,32 +457,46 @@ const GameBoard = ({ socket, user, onLogout }) => {
         </div>
       </div>
 
-      {/* 3. CONTROL DECK */}
-      <div className="mt-4 w-full max-w-5xl mx-auto flex flex-col items-end pr-10">
-        <Avatar 
-            isMain={true} 
-            username={user.username} 
-            isTyping={guess.length > 0} 
-            submitted={lastSubmit}
-            isMobile={user.isMobile}
-        />
-        <div className="w-full mt-2 border border-zinc-800 bg-zinc-950 p-4 shadow-2xl">
-          <form onSubmit={handleSubmit} className="flex gap-4">
-            <span className="text-zinc-600 animate-pulse">{'>'}</span>
-            <input
-              type="text"
-              autoFocus
-              className="flex-1 bg-transparent outline-none uppercase text-sm tracking-widest"
-              placeholder="TYPE CODE TO BREAK..."
-              value={guess}
-              onChange={(e) => {
-                setGuess(e.target.value);
-                socket.emit('typing', { roomId: user.roomId, isTyping: e.target.value.length > 0 });
-              }}
+      {/* CONTROL DECK */}
+        <div className="mt-4 w-full max-w-5xl mx-auto flex flex-col items-end pr-10">
+            <Avatar 
+                isMain={true} 
+                username={user.username} 
+                isTyping={guess.length > 0} 
+                submitted={lastSubmit}
+                isMobile={user.isMobile}
             />
-          </form>
+            <div className="w-full mt-2 flex gap-2">
+                <div className="flex-1 border border-zinc-800 bg-zinc-950 p-4 shadow-2xl relative">
+                    <form onSubmit={handleSubmit} className="flex gap-4">
+                        <span className="text-zinc-600 animate-pulse">{'>'}</span>
+                        <input
+                            type="text"
+                            autoFocus
+                            className="flex-1 bg-transparent outline-none uppercase text-sm tracking-widest"
+                            placeholder="TYPE CODE TO BREAK..."
+                            value={guess}
+                            onChange={(e) => {
+                                setGuess(e.target.value);
+                                socket.emit('typing', { roomId: user.roomId, isTyping: e.target.value.length > 0 });
+                            }}
+                        />
+                    </form>
+                    {/* Підказка */}
+                    <div className="absolute pointer-events-none right-4 top-1/2 -translate-y-1/2 text-[8px] text-zinc-700 hidden md:block">
+                        PRESS [TAB] TO VIEW TOP
+                    </div>
+                </div>
+
+                {/* Кнопка швидкого повернення вгору */}
+                <button 
+                    onClick={handleShowTop}
+                    className="border border-zinc-800 bg-zinc-950 px-4 hover:bg-zinc-900 transition-colors flex flex-col justify-center items-center gap-1 group"
+                >
+                    <span className="text-sm text-zinc-500 group-hover:text-white uppercase tracking-widest">Top ^</span>
+                </button>
+            </div>
         </div>
-      </div>
     </div>
   );
 };

@@ -67,7 +67,9 @@ io.on('connection', (socket) => {
                 ownerId: isOwner ? socket.id : null,
                 targetWord: targetWord,
                 players: [],
-                history: []
+                history: [],
+                restartVotes: new Set(),
+                isRestarting: false
             };
             console.log(`Кімната ${roomId} активована. Ціль: ${targetWord}`);
         }
@@ -133,7 +135,28 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('receive_guess', attempt);
 
         if (rank === 1) {
+            const room = rooms[roomId];
+            room.isRestarting = true; // Блокуємо нові введення
+
+            // Розкриваємо слово (перемога)
+            io.to(roomId).emit('reveal_word', { 
+                word: cleanWord, 
+                isWin: true,
+                winnerName: player
+            });
+
+            // Подія перемоги (конфеті)
             io.to(roomId).emit('game_won', { winner: player, word: cleanWord });
+
+            // Авто-перехід
+            setTimeout(async () => {
+                const newWord = await fetchRandomWord();
+                room.targetWord = newWord;
+                room.history = [];
+                room.restartVotes = new Set();
+                room.isRestarting = false;
+                io.to(roomId).emit('room_restarted', { history: [] });
+            }, 7000);
         }
     });
 
@@ -161,22 +184,79 @@ io.on('connection', (socket) => {
         }
     };
 
-    // Рестарт гри (тільки для власника кімнати або за домовленістю)
-    socket.on('restart_room', async ({ roomId }) => {
+    socket.on('restart_room', ({ roomId, username }) => {
         if (!rooms[roomId]) return;
-
-        console.log(`Рестарт кімнати ${roomId}`);
-        const newWord = await fetchRandomWord(); // Беремо нове слово з Python
         
-        rooms[roomId].targetWord = newWord;
-        rooms[roomId].history = []; // Очищаємо історію
-        console.log(`Кімната ${roomId} активована. Ціль: ${newWord}`);
+        const room = rooms[roomId];
+        
+        // Якщо рестарт вже в процесі, ігноруємо нові запити
+        if (room.isRestarting) return;
 
-        // Повідомляємо всіх, що гра почалася знову
-        io.to(roomId).emit('room_restarted', { 
-            message: "SYSTEM: Database wiped. New encryption detected.",
-            history: [] 
+        // Додаємо голос гравця
+        if (!room.restartVotes) room.restartVotes = new Set();
+        room.restartVotes.add(username);
+
+        const totalPlayers = room.players.length;
+        const currentVotes = room.restartVotes.size;
+
+        // Повідомляємо всіх про стан голосування
+        io.to(roomId).emit('restart_progress', {
+            votes: currentVotes,
+            total: totalPlayers,
+            voters: Array.from(room.restartVotes)
         });
+
+        // Якщо всі підтвердили
+        if (currentVotes >= totalPlayers) {
+            room.isRestarting = true;
+            
+            // Розкриваємо слово всім
+            io.to(roomId).emit('reveal_word', { 
+                word: room.targetWord,
+                message: "SYSTEM: Manual override. Decrypting target..." 
+            });
+
+            // Таймер на 5 секунд перед новою грою
+            setTimeout(async () => {
+                const newWord = await fetchRandomWord();
+                room.targetWord = newWord;
+                room.history = [];
+                room.restartVotes = new Set();
+                room.isRestarting = false;
+
+                console.log(`Нова гра в ${roomId}. Ціль: ${newWord}`);
+
+                io.to(roomId).emit('room_restarted', { 
+                    message: "SYSTEM: New session initialized.",
+                    history: [] 
+                });
+            }, 5000);
+        }
+    });
+
+    socket.on('cancel_restart', ({ roomId, username }) => {
+        if (!rooms[roomId]) return;
+        
+        const room = rooms[roomId];
+        
+        // Якщо рестарт вже в процесі, ігноруємо скасування
+        if (room.isRestarting) return;
+
+        if (room.restartVotes) {
+            room.restartVotes.delete(username);
+            
+            const totalPlayers = room.players.length;
+            const currentVotes = room.restartVotes.size;
+
+            // Оновлюємо статус голосування
+            io.to(roomId).emit('restart_progress', {
+                votes: currentVotes,
+                total: totalPlayers,
+                voters: Array.from(room.restartVotes)
+            });
+            
+            console.log(`Гравець ${username} скасував голос за рестарт у ${roomId}`);
+        }
     });
 
     socket.on('leave_room', () => {
