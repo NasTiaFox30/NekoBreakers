@@ -257,7 +257,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
         {/* СТАТУС ГОЛОСУВАННЯ */}
         <div className="h-4">
             <AnimatePresence>
-                {restartStatus && (
+                {restartStatus && restartStatus.votes > 0 && (
                     <motion.div 
                         initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                         className="text-[10px] text-orange-500 animate-pulse tracking-widest text-center"
