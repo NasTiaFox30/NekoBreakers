@@ -33,10 +33,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
 
     // ЛОГІКА СКРОЛУ: Фокус на 3 сек -> Повернення на ТОП
     useEffect(() => {
-        // Якщо скрол заблокований кнопкою "Show Top", нічого не робимо
-        if (isAutoScrollLocked) return;
-
-        if (scrollRef.current) {
+        if (scrollRef.current && (lastWord !== '********' || lastHint)) {
             const targetWord = lastHint || lastWord;
             const elements = scrollRef.current.querySelectorAll('.bg-zinc-900\\/40');
             const activeElement = Array.from(elements).find(el => 
@@ -44,10 +41,18 @@ const GameBoard = ({ socket, user, onLogout }) => {
             );
 
             if (activeElement) {
+                // Скролимо до нового слова/підказки
                 activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Повертаємось на початок
+                const returnTimer = setTimeout(() => {
+                    handleShowTop();
+                }, 3000);
+
+                return () => clearTimeout(returnTimer);
             }
         }
-    }, [attempts, lastWord, lastHint, isAutoScrollLocked]);
+    }, [attempts, lastWord, lastHint]); //При зміні списку, останнього слова, підказки
 
     // Cокет-слухачі для оновлення стану гри
     useEffect(() => {
