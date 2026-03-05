@@ -56,7 +56,7 @@ function App() {
 
       {/* VERSION */}
       <div className='absolute bottom-4 right-4 text-[10px] font-mono text-zinc-600 uppercase tracking-widest pointer-events-none select-none'>
-        NekoBreakers V{__APP_VERSION__} &copy;
+        &copy; NekoBreakers V{__APP_VERSION__}
       </div>
     </div>
   );
