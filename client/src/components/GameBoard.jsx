@@ -141,6 +141,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
             setLastRank(null);
             setLastHint(null);
             setIsWon(false);
+            setWinnerName(null);
             setGuess('');
             setRevealedWord(null);
             setRestartStatus(null);
