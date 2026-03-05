@@ -196,25 +196,42 @@ const GameBoard = ({ socket, user, onLogout }) => {
   return (
     <div className="min-h-screen bg-black text-white font-mono flex flex-col p-6 overflow-hidden select-none">
 
-        {/* YOU DID IT OVERLAY */}
+        {/* REVEAL OVERLAY (Win/Restart) */}
         <AnimatePresence>
-            {isWon && (
+            {revealedWord && (
                 <motion.div 
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                    className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/80 backdrop-blur-bg"
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    exit={{ opacity: 0 }}
+                    className={`fixed inset-0 z-[150] flex flex-col items-center justify-center backdrop-blur-xl transition-colors duration-1000 ${
+                        isWon ? 'bg-green-950/90' : 'bg-red-950/90'
+                    }`}
                 >
-                    <motion.h1 
-                        initial={{ scale: 0.5, y: 50 }} animate={{ scale: 1, y: 0 }}
-                        className="text-6xl font-black text-green-500 tracking-[0.3em] mb-8"
-                    >
-                        YOU DID IT!
-                    </motion.h1>
-                    <button 
-                        onClick={handleRestart}
-                        className="px-8 py-3 border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-black transition-all font-bold tracking-widest uppercase"
-                    >
-                        [ Reboot System / Restart ]
-                    </button>
+                    <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="text-center">
+                        <div className={`${isWon ? 'text-green-500' : 'text-red-500'} text-xs tracking-[0.6em] mb-6 uppercase animate-pulse font-black`}>
+                            {isWon ? '>>> ACCESS_GRANTED / TARGET_ACQUIRED <<<' : '>>> SYSTEM_OVERRIDE / DATA_REVEALED <<<'}
+                        </div>
+                        
+                        <div className={`text-7xl md:text-8xl font-black text-white tracking-[0.2em] mb-10 bg-white/5 px-12 py-6 border-y ${
+                            isWon ? 'border-green-500/50 shadow-[0_0_50px_rgba(34,197,94,0.4)]' : 'border-red-500/50'
+                        } uppercase`}>
+                            {revealedWord}
+                        </div>
+
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="w-64 h-1 bg-white/10 overflow-hidden rounded-full relative">
+                                <motion.div 
+                                    initial={{ x: "-100%" }} 
+                                    animate={{ x: "0%" }}
+                                    transition={{ duration: isWon ? 7 : 5, ease: "linear" }}
+                                    className={`absolute inset-0 ${isWon ? 'bg-green-500' : 'bg-red-500'}`}
+                                />
+                            </div>
+                            <span className="text-[10px] text-white/40 tracking-[0.3em] uppercase font-mono">
+                                {isWon ? 'Syncing next security layer...' : 'Emergency reboot in progress...'}
+                            </span>
+                        </div>
+                    </motion.div>
                 </motion.div>
             )}
         </AnimatePresence>
