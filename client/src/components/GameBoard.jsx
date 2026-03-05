@@ -235,6 +235,20 @@ const GameBoard = ({ socket, user, onLogout }) => {
                 </motion.div>
             )}
         </AnimatePresence>
+
+        {/* СТАТУС ГОЛОСУВАННЯ */}
+        <div className="h-4">
+            <AnimatePresence>
+                {restartStatus && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                        className="text-[10px] text-orange-500 animate-pulse tracking-widest text-center"
+                    >
+                        REBOOT_VOTES: {restartStatus.votes} / {restartStatus.total} CONFIRMED...
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
       
         {/* HEADER */}
         <div className="border-b border-zinc-900 pb-4 mb-6 flex justify-between items-end">
