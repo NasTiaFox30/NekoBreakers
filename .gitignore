@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+*_pycache__/
+uk_model.bin
+
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
