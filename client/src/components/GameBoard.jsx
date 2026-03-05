@@ -213,7 +213,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
                     }`}
                 >
                     <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="text-center">
-                        <div className={`${isWon ? 'text-green-500' : 'text-red-500'} text-xs tracking-[0.6em] mb-6 uppercase animate-pulse font-black`}>
+                        <div className={`${isWon ? 'text-green-500' : 'text-red-500'} text-xs tracking-[0.6em] mb-2 uppercase animate-pulse font-black`}>
                             {isWon ? '>>> ACCESS_GRANTED / TARGET_ACQUIRED <<<' : '>>> SYSTEM_OVERRIDE / DATA_REVEALED <<<'}
                         </div>
                         
