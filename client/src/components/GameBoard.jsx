@@ -24,6 +24,12 @@ const GameBoard = ({ socket, user, onLogout }) => {
     // Реф для контейнера списку спроб
     const scrollRef = useRef(null);
 
+    useEffect(() => {
+        const handleResize = () => setIsMobileView(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     // Слухач клавіші TAB
     useEffect(() => {
         const handleKeyDown = (e) => {
