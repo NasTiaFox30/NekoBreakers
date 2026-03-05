@@ -19,6 +19,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
     const [winnerName, setWinnerName] = useState(null);
     const [restartStatus, setRestartStatus] = useState(null); // {votes, total}
     const [revealedWord, setRevealedWord] = useState(null);
+    const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
   
     // Реф для контейнера списку спроб
     const scrollRef = useRef(null);
