@@ -67,7 +67,9 @@ io.on('connection', (socket) => {
                 ownerId: isOwner ? socket.id : null,
                 targetWord: targetWord,
                 players: [],
-                history: []
+                history: [],
+                restartVotes: new Set(),
+                isRestarting: false
             };
             console.log(`Кімната ${roomId} активована. Ціль: ${targetWord}`);
         }
