@@ -127,10 +127,11 @@ const GameBoard = ({ socket, user, onLogout }) => {
             }, 250);
         });
 
-        socket.on('room_restarted', ({ history }) => {
+        socket.on('room_restarted', () => {
             setAttempts([]);
             setArchive([]);
             setLastWord('********');
+            setLastRank(null);
             setLastHint(null);
             setIsWon(false);
             setGuess('');
