@@ -125,7 +125,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
             setRestartStatus(data);
         });
 
-        socket.on('reveal_word', ({ word, isWin }) => {
+        socket.on('reveal_word', ({ word, isWin, winnerName }) => {
             setRevealedWord(word);
             if (isWin) setIsWon(true);
             setRestartStatus(null); 
