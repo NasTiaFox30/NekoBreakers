@@ -141,7 +141,8 @@ io.on('connection', (socket) => {
             // Розкриваємо слово (перемога)
             io.to(roomId).emit('reveal_word', { 
                 word: cleanWord, 
-                isWin: true 
+                isWin: true,
+                winnerName: player
             });
 
             // Подія перемоги (конфеті)
