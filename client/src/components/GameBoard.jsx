@@ -217,6 +217,19 @@ const GameBoard = ({ socket, user, onLogout }) => {
                             {isWon ? '>>> ACCESS_GRANTED / TARGET_ACQUIRED <<<' : '>>> SYSTEM_OVERRIDE / DATA_REVEALED <<<'}
                         </div>
                         
+                        {/* переможець */}
+                        <AnimatePresence>
+                            {isWon && winnerName && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-white text-lg font-bold mb-4 tracking-widest"
+                                >
+                                    CONGRATULATIONS, <span className="text-green-400">@{winnerName}</span>!
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                        
                         <div className={`text-7xl md:text-8xl font-black text-white tracking-[0.2em] mb-10 bg-white/5 px-12 py-6 border-y ${
                             isWon ? 'border-green-500/50 shadow-[0_0_50px_rgba(34,197,94,0.4)]' : 'border-red-500/50'
                         } uppercase`}>
