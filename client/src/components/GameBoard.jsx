@@ -371,32 +371,46 @@ const GameBoard = ({ socket, user, onLogout }) => {
         </div>
       </div>
 
-      {/* 3. CONTROL DECK */}
-      <div className="mt-4 w-full max-w-5xl mx-auto flex flex-col items-end pr-10">
-        <Avatar 
-            isMain={true} 
-            username={user.username} 
-            isTyping={guess.length > 0} 
-            submitted={lastSubmit}
-            isMobile={user.isMobile}
-        />
-        <div className="w-full mt-2 border border-zinc-800 bg-zinc-950 p-4 shadow-2xl">
-          <form onSubmit={handleSubmit} className="flex gap-4">
-            <span className="text-zinc-600 animate-pulse">{'>'}</span>
-            <input
-              type="text"
-              autoFocus
-              className="flex-1 bg-transparent outline-none uppercase text-sm tracking-widest"
-              placeholder="TYPE CODE TO BREAK..."
-              value={guess}
-              onChange={(e) => {
-                setGuess(e.target.value);
-                socket.emit('typing', { roomId: user.roomId, isTyping: e.target.value.length > 0 });
-              }}
+      {/* CONTROL DECK */}
+        <div className="mt-4 w-full max-w-5xl mx-auto flex flex-col items-end pr-10">
+            <Avatar 
+                isMain={true} 
+                username={user.username} 
+                isTyping={guess.length > 0} 
+                submitted={lastSubmit}
+                isMobile={user.isMobile}
             />
-          </form>
+            <div className="w-full mt-2 flex gap-2">
+                <div className="flex-1 border border-zinc-800 bg-zinc-950 p-4 shadow-2xl relative">
+                    <form onSubmit={handleSubmit} className="flex gap-4">
+                        <span className="text-zinc-600 animate-pulse">{'>'}</span>
+                        <input
+                            type="text"
+                            autoFocus
+                            className="flex-1 bg-transparent outline-none uppercase text-sm tracking-widest"
+                            placeholder="TYPE CODE TO BREAK..."
+                            value={guess}
+                            onChange={(e) => {
+                                setGuess(e.target.value);
+                                socket.emit('typing', { roomId: user.roomId, isTyping: e.target.value.length > 0 });
+                            }}
+                        />
+                    </form>
+                    {/* Підказка */}
+                    <div className="absolute pointer-events-none right-4 top-1/2 -translate-y-1/2 text-[8px] text-zinc-700 hidden md:block">
+                        PRESS [TAB] TO VIEW TOP
+                    </div>
+                </div>
+
+                {/* Кнопка швидкого повернення вгору */}
+                <button 
+                    onClick={handleShowTop}
+                    className="border border-zinc-800 bg-zinc-950 px-4 hover:bg-zinc-900 transition-colors flex flex-col justify-center items-center gap-1 group"
+                >
+                    <span className="text-sm text-zinc-500 group-hover:text-white uppercase tracking-widest">Top ^</span>
+                </button>
+            </div>
         </div>
-      </div>
     </div>
   );
 };
