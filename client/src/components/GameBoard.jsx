@@ -329,11 +329,17 @@ const GameBoard = ({ socket, user, onLogout }) => {
                     >
                         {'>'} Decipher_Hint
                     </button>
+
                     <button 
                         onClick={handleRestart}
-                        className="text-[9px] border border-green-900/50 px-3 py-1 text-green-500/70 hover:text-green-400 hover:border-green-500 transition-all uppercase tracking-widest"
+                        disabled={isWon || revealedWord}
+                        className={`text-[9px] border px-3 py-1 transition-all uppercase tracking-widest ${
+                            restartStatus?.voters?.includes(user.username)
+                                ? "border-orange-500 text-orange-500 hover:bg-orange-500/10"
+                                : "border-green-900/50 text-green-500/70 hover:text-green-400 hover:border-green-500"
+                        }`}
                     >
-                        {'>'} Reboot_Level
+                        {restartStatus?.voters?.includes(user.username) ? '[ Cancel_Reboot ]' : '> Reboot_Level'}
                     </button>
                 </div>
             </div>
