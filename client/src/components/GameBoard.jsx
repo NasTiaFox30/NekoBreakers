@@ -257,14 +257,6 @@ const GameBoard = ({ socket, user, onLogout }) => {
                     >
                         {'>'} Reboot_Level
                     </button>
-                    <button 
-                        onClick={handleShowTop}
-                        className={`text-[8px] mt-1 uppercase tracking-widest px-2 py-0.5 border transition-all ${
-                            isAutoScrollLocked ? 'bg-white text-black border-white' : 'text-zinc-500 border-zinc-800 hover:text-white hover:border-zinc-500'
-                        }`}
-                    >
-                        {isAutoScrollLocked ? '[ Locked_on_Top ]' : 'View_Leaderboard'}
-                    </button>
                 </div>
             </div>
 
