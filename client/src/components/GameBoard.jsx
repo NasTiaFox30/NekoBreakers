@@ -14,7 +14,6 @@ const GameBoard = ({ socket, user, onLogout }) => {
     const [lastWord, setLastWord] = useState('********');
     const [lastHint, setLastHint] = useState(null);
     const [rejectedWord, setRejectedWord] = useState(null);
-    const [isAutoScrollLocked, setIsAutoScrollLocked] = useState(false);
     const [isWon, setIsWon] = useState(false);
   
     // Реф для контейнера списку спроб
@@ -150,12 +149,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
 
     const handleShowTop = () => {
         if (scrollRef.current) {
-            // Скролимо в самий вгору
             scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-            
-            // Блокуємо автоскрол на 5 секунд
-            setIsAutoScrollLocked(true);
-            setTimeout(() => setIsAutoScrollLocked(false), 5000);
         }
     };
 
