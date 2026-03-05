@@ -19,9 +19,16 @@ const GameBoard = ({ socket, user, onLogout }) => {
     const [winnerName, setWinnerName] = useState(null);
     const [restartStatus, setRestartStatus] = useState(null); // {votes, total}
     const [revealedWord, setRevealedWord] = useState(null);
+    const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
   
     // Реф для контейнера списку спроб
     const scrollRef = useRef(null);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobileView(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Слухач клавіші TAB
     useEffect(() => {
@@ -206,266 +213,317 @@ const GameBoard = ({ socket, user, onLogout }) => {
   const rightSide = otherPlayers.slice(Math.ceil(otherPlayers.length / 2));
 
   return (
-    <div className="min-h-screen bg-black text-white font-mono flex flex-col p-6 overflow-hidden select-none">
-
-        {/* REVEAL OVERLAY (Win/Restart) */}
+    <div className="min-h-screen bg-black text-white font-mono flex flex-col p-4 md:p-6 overflow-hidden select-none">
         <AnimatePresence>
+            {/* REVEAL OVERLAY (Win/Restart) */}
             {revealedWord && (
                 <motion.div 
-                    initial={{ opacity: 0 }} 
-                    animate={{ opacity: 1 }} 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className={`fixed inset-0 z-[150] flex flex-col items-center justify-center backdrop-blur-xl transition-colors duration-1000 ${
                         isWon ? 'bg-green-950/90' : 'bg-red-950/90'
                     }`}
                 >
-                    <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="text-center">
-                        <div className={`${isWon ? 'text-green-500' : 'text-red-500'} text-xs tracking-[0.6em] mb-2 uppercase animate-pulse font-black`}>
-                            {isWon ? '>>> ACCESS_GRANTED / TARGET_ACQUIRED <<<' : '>>> SYSTEM_OVERRIDE / DATA_REVEALED <<<'}
+                    <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="text-center px-6">
+                        <div className={`${isWon ? 'text-green-500' : 'text-red-500'} text-[10px] md:text-xs tracking-[0.6em] mb-2 uppercase animate-pulse font-black`}>
+                            {isWon ? '>>> ACCESS_GRANTED <<<' : '>>> SYSTEM_OVERRIDE / DATA_REVEALED<<<'}
                         </div>
-                        
-                        {/* переможець */}
-                        <AnimatePresence>
-                            {isWon && winnerName && (
-                                <motion.div 
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="text-white text-lg font-bold mb-4 tracking-widest"
-                                >
-                                    CONGRATULATIONS, <span className="text-green-400">@{winnerName}</span>!
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                        
-                        <div className={`text-7xl md:text-8xl font-black text-white tracking-[0.2em] mb-10 bg-white/5 px-12 py-6 border-y ${
-                            isWon ? 'border-green-500/50 shadow-[0_0_50px_rgba(34,197,94,0.4)]' : 'border-red-500/50'
-                        } uppercase`}>
-                            {revealedWord}
-                        </div>
+                    
+                    {isWon && winnerName && (
+                        <motion.div 
+                            initial={{ opacity: 0 }} 
+                            animate={{ opacity: 1 }}
+                            className="text-white text-sm md:text-lg font-bold mb-4 tracking-widest uppercase"
+                        >
+                            WINNER: <span className="text-green-400">@{winnerName}</span>
+                        </motion.div>
+                    )}
+                    
+                    <div className={`text-5xl md:text-8xl font-black text-white tracking-[0.2em] mb-10 bg-white/5 py-6 border-y ${
+                        isWon ? 'border-green-500/50 shadow-[0_0_50px_rgba(34,197,94,0.4)]' : 'border-red-500/50'
+                    } uppercase`}>
+                        {revealedWord}
+                    </div>
 
-                        <div className="flex flex-col items-center gap-4">
-                            <div className="w-64 h-1 bg-white/10 overflow-hidden rounded-full relative">
-                                <motion.div 
-                                    initial={{ x: "-100%" }} 
-                                    animate={{ x: "0%" }}
-                                    transition={{ duration: isWon ? 7 : 5, ease: "linear" }}
-                                    className={`absolute inset-0 ${isWon ? 'bg-green-500' : 'bg-red-500'}`}
-                                />
-                            </div>
-                            <span className="text-[10px] text-white/40 tracking-[0.3em] uppercase font-mono">
-                                {isWon ? 'Syncing next security layer...' : 'Emergency reboot in progress...'}
-                            </span>
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-48 md:w-64 h-1 bg-white/10 overflow-hidden rounded-full">
+                            <motion.div 
+                                initial={{ x: "-100%" }}
+                                animate={{ x: "0%" }}
+                                transition={{ duration: isWon ? 7 : 5, ease: "linear" }}
+                                className={`h-full ${isWon ? 'bg-green-500' : 'bg-red-500'}`}
+                            />
                         </div>
-                    </motion.div>
+                        <span className="text-[10px] text-white/40 tracking-[0.3em] uppercase font-mono">
+                            {isWon ? 'Syncing next security layer...' : 'Emergency reboot in progress...'}
+                        </span>
+                    </div>
+                </motion.div>
+            </motion.div>
+            )}
+
+            {/* СТАТУС ГОЛОСУВАННЯ */}
+            {restartStatus && restartStatus.votes > 0 && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                    className="text-[10px] text-orange-500 animate-pulse tracking-widest text-center"
+                >
+                    REBOOT_VOTES: {restartStatus.votes} / {restartStatus.total} CONFIRMED...
                 </motion.div>
             )}
         </AnimatePresence>
 
-        {/* СТАТУС ГОЛОСУВАННЯ */}
-        <div className="h-4">
-            <AnimatePresence>
-                {restartStatus && restartStatus.votes > 0 && (
-                    <motion.div 
-                        initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                        className="text-[10px] text-orange-500 animate-pulse tracking-widest text-center"
-                    >
-                        REBOOT_VOTES: {restartStatus.votes} / {restartStatus.total} CONFIRMED...
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
-      
-        {/* HEADER */}
-        <div className="border-b border-zinc-900 pb-4 mb-6 flex justify-between items-end">
-            
-            {/* LEFT: Room ID & Leave */}
-            <div className="flex flex-col gap-2">
-                <div className="text-[10px] text-zinc-500 uppercase tracking-[0.2em]">
-                    Room_ID: <span className="text-white">{user.roomId}</span>
-                </div>
-                <button 
-                    onClick={handleLeave}
-                    className="text-[9px] border border-zinc-800 px-2 py-1 text-zinc-600 hover:text-red-500 hover:border-red-900 transition-colors uppercase tracking-widest text-left w-fit"
-                >
-                    [ Leave_Session ]
-                </button>
-            </div>
 
-            {/* CENTER: Counter & Word & SYSTEM BUTTONS */}
-            <div className="flex flex-col items-center gap-4">
-                <div className="flex items-center gap-6">
-                    <span className="text-zinc-800 font-black text-3xl">[{attempts.length}]</span>
-                    <div className="flex items-center">
-                        {/* ОСТАННЄ СЛОВО*/}
-                        <motion.span 
-                            key={lastWord}
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-zinc-200 text-3xl font-light tracking-[0.5em] uppercase"
+        {/* ==== MAIN LAYOUT ==== */}
+
+        {isMobileView ? (
+            /* --- MOBILE LAYOUT --- */
+
+            <div className="flex flex-col">
+                {/* Спрощений хедер */}
+                <div className="flex justify-between items-center mb-2 text-[9px] text-zinc-500 uppercase tracking-widest">
+                    <button 
+                        onClick={handleLeave}
+                        className="text-[9px] border border-zinc-800 px-2 py-1 text-zinc-600 hover:text-red-500 hover:border-red-900 transition-colors uppercase tracking-widest text-left w-fit"
                         >
-                            {lastWord}
-                        </motion.span>
-                        {/* РАНГ */}
-                        <AnimatePresence>
-                            {lastRank && (
-                                <motion.span 
-                                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                                    className={`text-[14px] tracking-[0.3em] font-bold mt-1 border-b ${
-                                        lastRank <= 500 ? 'text-green-500' : 'text-zinc-500'
-                                    }`}
-                                >
-                                    {lastRank}{'★'}
-                                </motion.span>
-                            )}
-                        </AnimatePresence>
-                    </div>
+                            [ Leave ]
+                    </button>
+                    <span>ID: {user.roomId}</span>                    
+                    <span>{players.length}/3 Hackers</span>
                 </div>
 
-                {/* NEW SYSTEM BUTTONS */}
-                <div className="flex gap-4">
-                    <button 
-                        onClick={handleRequestHint}
-                        className="text-[9px] border border-blue-900/50 px-3 py-1 text-blue-500/70 hover:text-blue-400 hover:border-blue-500 transition-all uppercase tracking-widest"
-                    >
-                        {'>'} Decipher_Hint
-                    </button>
+                {/* ГОРИЗОНТАЛЬНА ПАНЕЛЬ ГРАВЦІВ */}
+                <div className="flex justify-center items-center gap-4 py-2 border-b border-zinc-900/50 mb-2 bg-zinc-950/20 flex-shrink-0">
+                    {players.map(p => (
+                        <div key={p.id} className="w-16 flex-shrink-0 flex justify-center">
+                            <Avatar 
+                                username={p.username} 
+                                isMain={p.username === user.username}
+                                isTyping={p.id === socket.id ? guess.length > 0 : typingPlayers[p.id]} 
+                                submitted={lastSubmiter?.username === p.username ? lastSubmiter.timestamp : 0}
+                                isMobile={p.isMobile}
+                                isCompact={true} 
+                            />
+                        </div>
+                    ))}
+                </div>
 
-                    <button 
-                        onClick={handleRestart}
-                        disabled={isWon || revealedWord}
-                        className={`text-[9px] border px-3 py-1 transition-all uppercase tracking-widest ${
-                            restartStatus?.voters?.includes(user.username)
-                                ? "border-orange-500 text-orange-500 hover:bg-orange-500/10"
-                                : "border-green-900/50 text-green-500/70 hover:text-green-400 hover:border-green-500"
-                        }`}
-                    >
-                        {restartStatus?.voters?.includes(user.username) ? '[ Cancel_Reboot ]' : '> Reboot_Level'}
-                    </button>
+                {/* CENTER PROCESSING UNIT */}
+                <div ref={scrollRef} className="max-w-lg min-h-100 max-h-105 overflow-y-scroll custom-scrollbar flex flex-col gap-1 px-1 py-2 scroll-smooth">
+                    <AnimatePresence initial={false}>
+                        {attempts.map((att) => (
+                            <motion.div 
+                                layout
+                                id={`attempt-${att.timestamp}`}
+                                key={att.timestamp}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                className={`bg-zinc-900/40 border p-1.5 font-mono relative transition-colors duration-500 ${
+                                    att.player === "SYSTEM_DECODER" 
+                                    ? "border-blue-500/50 bg-blue-900/10 shadow-[0_0_15px_rgba(59,130,246,0.2)]" 
+                                    : att.word === lastWord 
+                                        ? "border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.2)]" 
+                                        : "border-zinc-800"
+                                }`}
+                            >
+                                <div className="flex justify-between text-[8px] uppercase tracking-widest mb-0.2 opacity-70">
+                                    <span className={att.player === "SYSTEM_DECODER" ? "text-blue-400 font-bold" : "text-zinc-500"}>
+                                        {att.player === "SYSTEM_DECODER" ? "!!! SYSTEM_DECODER_HINT !!!" : `Source: ${att.player}`}
+                                    </span>
+                                    <span className={att.rank <= 500 ? "text-green-400" : "text-zinc-400"}>
+                                        Rank: {att.rank}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-bold tracking-widest text-white min-w-[80px] uppercase">
+                                        {att.word}
+                                    </span>
+                                    <div className="flex-1 h-1 bg-zinc-950 border border-zinc-800 relative overflow-hidden">
+                                        <motion.div 
+                                            layout
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${Math.max(5, 100 - (att.rank / 100))}%` }}
+                                            className={`h-full ${att.rank <= 500 ? "bg-green-500" : "bg-zinc-700"}`}
+                                        />
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
                 </div>
             </div>
+        ) : (
 
-            {/* RIGHT: Players count */}
-            <div className="text-right text-[10px] text-zinc-500 uppercase tracking-widest">
-                Players: <span className="text-white">{players.length} / 3</span>
-            </div>
-
-        </div>
-
-        {/* BLACK ARCHIVE UNIT (Зліва знизу) */}
-        <div className="absolute bottom-4 left-4 w-48 pointer-events-none">
-            <div className="text-[9px] text-red-900 mb-2 tracking-[0.3em] uppercase border-b border-red-900/30 flex justify-between">
-                <span>System_Trash</span>
-                <span className="animate-pulse">●</span>
-            </div>
+            /* --- DESKTOP LAYOUT --- */
+            <>
+            {/* HEADER */}
+            <div className="border-b border-zinc-900 pb-4 mb-6 flex justify-between items-end">
             
-            <AnimatePresence>
-                {rejectedWord && (
-                    <motion.div
-                        initial={{ y: -20, x: 20, opacity: 0, scale: 1.5 }}
-                        animate={{ y: 0, x: 0, opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, filter: "blur(10px)" }}
-                        transition={{ duration: 1.5, ease: "easeIn" }}
-                        className="text-red-500 font-bold text-xs mb-2 tracking-widest"
-                    >
-                        {rejectedWord} {'>>'} REJECTED
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Список в архіві */}
-            <div className="space-y-1 opacity-20">
-                {archive.map((w, i) => (
-                    <div key={i} className="text-[8px] text-zinc-500 line-through truncate uppercase">
-                        {w}
+                {/* LEFT: Room ID & Leave */}
+                <div className="flex flex-col gap-2">
+                    <div className="text-[10px] text-zinc-500 uppercase tracking-[0.2em]">
+                        Room_ID: <span className="text-white">{user.roomId}</span>
                     </div>
-                ))}
+                    <button 
+                        onClick={handleLeave}
+                        className="text-[9px] border border-zinc-800 px-2 py-1 text-zinc-600 hover:text-red-500 hover:border-red-900 transition-colors uppercase tracking-widest text-left w-fit"
+                        >
+                            [ Leave_Session ]
+                    </button>
+                </div>
+
+                {/* CENTER: Counter & Word & SYSTEM BUTTONS */}
+                <div className="flex flex-col items-center gap-4">
+                    <div className="flex items-center gap-6">
+                        <span className="text-zinc-800 font-black text-3xl">[{attempts.length}]</span>
+                        <div className="flex items-center">
+                            <AnimatePresence>
+                                {/* ОСТАННЄ СЛОВО*/}
+                                <motion.span 
+                                    key={lastWord}
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-zinc-200 text-3xl font-light tracking-[0.5em] uppercase"
+                                >
+                                    {lastWord}
+                                </motion.span>
+                                {/* РАНГ */}
+                                {lastRank && (
+                                    <motion.span 
+                                        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                                        className={`text-[14px] tracking-[0.3em] font-bold mt-1 border-b ${
+                                            lastRank <= 500 ? 'text-green-500' : 'text-zinc-500'
+                                        }`}
+                                    >
+                                        {lastRank}{'★'}
+                                    </motion.span>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </div>
+
+                {/* SYSTEM BUTTONS */}
+                    <div className="flex gap-4">
+                        <button 
+                            onClick={handleRequestHint}
+                            className="text-[9px] border border-blue-900/50 px-3 py-1 text-blue-500/70 hover:text-blue-400 transition-all uppercase tracking-widest"
+                            >
+                                {'>'} Decipher_Hint
+                        </button>
+
+                        <button 
+                            onClick={handleRestart}
+                            disabled={isWon || revealedWord}
+                            className={`text-[9px] border px-3 py-1 transition-all uppercase tracking-widest ${
+                                restartStatus?.voters?.includes(user.username)
+                                ? "border-orange-500 text-orange-500" 
+                                : "border-green-900/50 text-green-500/70"
+                            }`}
+                        >
+                            {restartStatus?.voters?.includes(user.username) ? '[ Cancel_Reboot ]' : '> Reboot_Level'}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Players Count */}
+                <div className="text-right text-[10px] text-zinc-500 uppercase tracking-widest">
+                    Players: <span className="text-white">{players.length} / 3</span>
+                </div>
+
             </div>
-        </div>
 
-      {/* MAIN AREA */}
-      <div className="flex-1 flex justify-between items-center overflow-hidden px-40">
-        {/* LEFT SECTOR */}
-        <div className="w-32 space-y-12">
-            {leftSide.map(p => (
-            <Avatar 
-                key={p.id} 
-                username={p.username} 
-                isTyping={typingPlayers[p.id]} 
-                submitted={lastSubmiter?.username === p.username ? lastSubmiter.timestamp : 0}
-                isMobile={p.isMobile}
-            />
-            ))}
-        </div>
-
-        {/* CENTER PROCESSING UNIT */}
-        <div ref={scrollRef} className="flex-1 max-w-xl h-[450px] overflow-y-auto custom-scrollbar flex flex-col gap-3 px-4 py-2 scroll-smooth">
-          <AnimatePresence initial={false}>
-            {attempts.map((att) => (
-            <motion.div 
-                layout
-                id={`attempt-${att.timestamp}`}
-                key={att.timestamp}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className={`bg-zinc-900/40 border p-1.5 font-mono relative transition-colors duration-500 ${
-                    att.player === "SYSTEM_DECODER" 
-                        ? "border-blue-500/50 bg-blue-900/10 shadow-[0_0_15px_rgba(59,130,246,0.2)]"
-                        : att.word === lastWord 
-                            ? "border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.2)]" 
-                            : "border-zinc-800"
-                }`}
-            >
-                <div className="flex justify-between text-[8px] uppercase tracking-widest mb-0.2 opacity-70">
-                    <span className={att.player === "SYSTEM_DECODER" ? "text-blue-400 font-bold" : "text-zinc-500"}>
-                        {att.player === "SYSTEM_DECODER" ? "!!! SYSTEM_DECODER_HINT !!!" : `Source: ${att.player}`}
-                    </span>
-                    <span className={att.rank <= 500 ? "text-green-400" : "text-zinc-400"}>
-                        Rank: {att.rank}
-                    </span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold tracking-widest text-white min-w-[80px]">
-                        {att.word}
-                    </span>
-                    <div className="flex-1 h-1 bg-zinc-950 border border-zinc-800 relative overflow-hidden">
-                        <motion.div 
-                            layout
-                            initial={{ width: 0 }}
-                            animate={{ width: `${Math.max(5, 100 - (att.rank / 100))}%` }}
-                            className={`h-full ${att.rank <= 500 ? "bg-green-500" : "bg-zinc-700"}`}
+            {/* MAIN AREA */}
+            <div className="flex-1 flex justify-between items-center overflow-hidden px-40">                
+                {/* LEFT SECTOR */}
+                <div className="w-32 space-y-12">
+                    {leftSide.map(p => (
+                        <Avatar 
+                            key={p.id}
+                            username={p.username}
+                            isTyping={typingPlayers[p.id]}
+                            submitted={lastSubmiter?.username === p.username ? lastSubmiter.timestamp : 0}
+                            isMobile={p.isMobile}
                         />
-                    </div>
+                    ))}
                 </div>
-            </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
 
-        {/* RIGHT SECTOR */}
-        <div className="w-32 space-y-12">
-            {rightSide.map(p => (
-            <Avatar 
-                key={p.id} 
-                username={p.username} 
-                isTyping={typingPlayers[p.id]} 
-                submitted={lastSubmiter?.username === p.username ? lastSubmiter.timestamp : 0}
-                isMobile={p.isMobile}
-            />
-            ))}
-        </div>
-      </div>
+                {/* CENTER PROCESSING UNIT */}
+                <div ref={scrollRef} className="flex-1 max-w-xl h-[450px] overflow-y-auto custom-scrollbar flex flex-col gap-3 px-4 py-2 scroll-smooth">
+                    <AnimatePresence initial={false}>
+                        {attempts.map((att) => (
+                            <motion.div 
+                                layout
+                                id={`attempt-${att.timestamp}`}
+                                key={att.timestamp}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                className={`bg-zinc-900/40 border p-1.5 font-mono relative transition-colors duration-500 ${
+                                    att.player === "SYSTEM_DECODER" 
+                                    ? "border-blue-500/50 bg-blue-900/10 shadow-[0_0_15px_rgba(59,130,246,0.2)]" 
+                                    : att.word === lastWord 
+                                        ? "border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.2)]" 
+                                        : "border-zinc-800"
+                                }`}
+                            >
+                                <div className="flex justify-between text-[8px] uppercase tracking-widest mb-0.2 opacity-70">
+                                    <span className={att.player === "SYSTEM_DECODER" ? "text-blue-400 font-bold" : "text-zinc-500"}>
+                                        {att.player === "SYSTEM_DECODER" ? "!!! SYSTEM_DECODER_HINT !!!" : `Source: ${att.player}`}
+                                    </span>
+                                    <span className={att.rank <= 500 ? "text-green-400" : "text-zinc-400"}>
+                                        Rank: {att.rank}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-bold tracking-widest text-white min-w-[80px] uppercase">
+                                        {att.word}
+                                    </span>
+                                    <div className="flex-1 h-1 bg-zinc-950 border border-zinc-800 relative overflow-hidden">
+                                        <motion.div 
+                                            layout
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${Math.max(5, 100 - (att.rank / 100))}%` }}
+                                            className={`h-full ${att.rank <= 500 ? "bg-green-500" : "bg-zinc-700"}`}
+                                        />
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
+                </div>
 
-      {/* CONTROL DECK */}
-        <div className="mt-4 w-full max-w-5xl mx-auto flex flex-col items-end pr-10">
-            <Avatar 
-                isMain={true} 
-                username={user.username} 
-                isTyping={guess.length > 0} 
-                submitted={lastSubmit}
-                isMobile={user.isMobile}
-            />
+                {/* RIGHT SECTOR */}
+                <div className="w-32 space-y-12">
+                    {rightSide.map(p => (
+                        <Avatar 
+                            key={p.id}
+                            username={p.username}
+                            isTyping={typingPlayers[p.id]}
+                            submitted={lastSubmiter?.username === p.username ? lastSubmiter.timestamp : 0} isMobile={p.isMobile}
+                        />
+                    ))}
+                </div>
+            </div>
+            </>
+        )}
+
+        {/* CONTROL DECK */}
+        <div className={`mt-4 w-full max-w-5xl mx-auto flex flex-col
+            ${isMobileView ? 'items-center' : 'items-end pr-10'}`}
+        >
+            {!isMobileView && 
+                <Avatar 
+                    isMain={true} 
+                    username={user.username} 
+                    isTyping={guess.length > 0} 
+                    submitted={lastSubmit}
+                    isMobile={user.isMobile}
+                />
+            }
             <div className="w-full mt-2 flex gap-2">
                 <div className="flex-1 border border-zinc-800 bg-zinc-950 p-4 shadow-2xl relative">
                     <form onSubmit={handleSubmit} className="flex gap-4">
@@ -474,7 +532,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
                             type="text"
                             autoFocus
                             className="flex-1 bg-transparent outline-none uppercase text-sm tracking-widest"
-                            placeholder="TYPE CODE TO BREAK..."
+                            placeholder={isMobileView ? "TYPE..." : "TYPE CODE TO BREAK..."}
                             value={guess}
                             onChange={(e) => {
                                 setGuess(e.target.value);
@@ -483,9 +541,11 @@ const GameBoard = ({ socket, user, onLogout }) => {
                         />
                     </form>
                     {/* Підказка */}
-                    <div className="absolute pointer-events-none right-4 top-1/2 -translate-y-1/2 text-[8px] text-zinc-700 hidden md:block">
-                        PRESS [TAB] TO VIEW TOP
-                    </div>
+                    {!isMobileView && 
+                        <div className="absolute pointer-events-none right-4 top-1/2 -translate-y-1/2 text-[8px] text-zinc-700 hidden md:block uppercase">
+                            PRESS [TAB] TO VIEW TOP
+                        </div>
+                    }
                 </div>
 
                 {/* Кнопка швидкого повернення вгору */}
@@ -496,7 +556,35 @@ const GameBoard = ({ socket, user, onLogout }) => {
                     <span className="text-sm text-zinc-500 group-hover:text-white uppercase tracking-widest">Top ^</span>
                 </button>
             </div>
+            
+            {isMobileView && (
+                <div className="flex gap-2 w-full mt-2">
+                    <button onClick={handleRequestHint} className="flex-1 text-[8px] border border-blue-900/50 py-2 text-blue-500 uppercase">Hint</button>
+                    <button onClick={handleRestart} className={`flex-1 text-[8px] border py-2 uppercase ${restartStatus?.voters?.includes(user.username) ? "border-orange-500 text-orange-500" : "border-green-900/50 text-green-500"}`}>
+                    {restartStatus?.voters?.includes(user.username) ? 'Cancel' : 'Reboot'}
+                    </button>
+                </div>
+            )}
         </div>
+
+        {/* BLACK ARCHIVE (Hidden on mobile to save space) */}
+        {!isMobileView && (
+            <div className="absolute bottom-4 left-4 w-48 pointer-events-none">
+                <div className="text-[9px] text-red-900 mb-2 tracking-[0.3em] uppercase border-b border-red-900/30 flex justify-between">
+                    <span>System_Trash</span>
+                    <span className="animate-pulse">●</span>
+                </div>
+                <AnimatePresence>
+                    {rejectedWord && (
+                        <motion.div initial={{ y: -20, x: 20, opacity: 0 }} animate={{ y: 0, x: 0, opacity: 1 }} exit={{ opacity: 0 }}
+                            className="text-red-500 font-bold text-xs mb-2 tracking-widest uppercase">{rejectedWord} {'>>'} REJECTED</motion.div>
+                    )}
+                </AnimatePresence>
+                <div className="space-y-1 opacity-20">
+                    {archive.map((w, i) => <div key={i} className="text-[8px] text-zinc-500 line-through truncate uppercase">{w}</div>)}
+                </div>
+            </div>
+        )}
     </div>
   );
 };
