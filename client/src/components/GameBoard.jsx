@@ -510,12 +510,8 @@ const GameBoard = ({ socket, user, onLogout }) => {
                     ))}
                 </div>
             </div>
-            </>
-        )}
 
-
-        {/* BLACK ARCHIVE (Hidden on mobile to save space) */}
-        {!isMobileView && (
+            {/* BLACK ARCHIVE (Hidden on mobile to save space) */}
             <div className="relative mt-auto mx-auto w-full max-w-sm px-15 py-2">
                 <div className="flex gap-4 text-[8px] text-red-900/50 mb-2 tracking-[0.3em] uppercase border-b border-red-900/20 flex justify-between items-center">
                     <span>Trash</span>
@@ -544,6 +540,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
                     </div>
                 </div>
             </div>
+            </>
         )}
 
 
