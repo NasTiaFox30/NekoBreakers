@@ -354,6 +354,22 @@ const GameBoard = ({ socket, user, onLogout }) => {
                         ))}
                     </AnimatePresence>
                 </div>
+
+                {/* BLACK ARCHIVE */}
+                <div className="h-6 flex items-center justify-center px-4 flex-shrink-0 mt-1">
+                    <AnimatePresence mode="wait">
+                        {rejectedWord && (
+                            <motion.div 
+                                initial={{ y: 5, opacity: 0 }} 
+                                animate={{ y: 0, opacity: 1 }} 
+                                exit={{ y: -5, opacity: 0 }}
+                                className="text-red-500 font-bold text-[9px] tracking-widest uppercase"
+                            >
+                                {rejectedWord} REJECTED!
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
         ) : (
 
