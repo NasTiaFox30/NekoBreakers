@@ -553,7 +553,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
                     onClick={handleShowTop}
                     className="border border-zinc-800 bg-zinc-950 px-4 hover:bg-zinc-900 transition-colors flex flex-col justify-center items-center gap-1 group"
                 >
-                    <span className="text-sm text-zinc-500 group-hover:text-white uppercase tracking-widest">Top ^</span>
+                    <span className="text-sm text-zinc-500 group-hover:text-white uppercase tracking-widest">{isMobileView ? "^" : "TOP ^"}</span>
                 </button>
             </div>
             
