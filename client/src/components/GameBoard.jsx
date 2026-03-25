@@ -548,7 +548,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
 
 
         {/* CONTROL DECK */}
-        <div className={`flex-shrink-0 mt-auto pt-4 w-full max-w-5xl mx-auto flex flex-col
+        <div className={`flex-shrink-0 mt-auto pt-2 w-full max-w-5xl mx-auto flex flex-col
             ${isMobileView ? 'items-center' : 'items-end pr-10'}`}
         >
             {!isMobileView && 
