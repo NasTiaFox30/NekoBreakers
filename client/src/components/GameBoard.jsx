@@ -213,7 +213,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
   const rightSide = otherPlayers.slice(Math.ceil(otherPlayers.length / 2));
 
   return (
-    <div className="min-h-screen bg-black text-white font-mono flex flex-col p-4 md:p-6 overflow-hidden select-none">
+    <div className="h-screen w-full bg-black text-white font-mono flex flex-col p-4 md:p-6 overflow-hidden select-none">
         <AnimatePresence>
             {/* REVEAL OVERLAY (Win/Restart) */}
             {revealedWord && (
@@ -279,22 +279,25 @@ const GameBoard = ({ socket, user, onLogout }) => {
 
         {isMobileView ? (
             /* --- MOBILE LAYOUT --- */
-
-            <div className="flex flex-col">
-                {/* Спрощений хедер */}
-                <div className="flex justify-between items-center mb-2 text-[9px] text-zinc-500 uppercase tracking-widest">
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                
+                {/* HEADER */}
+                <div className="flex justify-between items-center mb-2 text-[9px] text-zinc-500 uppercase tracking-widest flex-shrink-0">
                     <button 
                         onClick={handleLeave}
-                        className="text-[9px] border border-zinc-800 px-2 py-1 text-zinc-600 hover:text-red-500 hover:border-red-900 transition-colors uppercase tracking-widest text-left w-fit"
-                        >
-                            [ Leave ]
+                        className="text-[9px] border border-zinc-800 px-2 py-1 text-zinc-600 active:text-red-500 transition-colors uppercase tracking-widest text-left"
+                    >
+                        [ Leave ]
                     </button>
-                    <span>ID: {user.roomId}</span>                    
+                    <div className="flex flex-col items-center">
+                        <span className="text-white text-[10px] tracking-widest">{user.roomId}</span>
+                        <span className="text-[7px] opacity-50">Session Code</span>
+                    </div>
                     <span>{players.length}/3 Hackers</span>
                 </div>
 
                 {/* ГОРИЗОНТАЛЬНА ПАНЕЛЬ ГРАВЦІВ */}
-                <div className="flex justify-center items-center gap-4 py-2 border-b border-zinc-900/50 mb-2 bg-zinc-950/20 flex-shrink-0">
+                <div className="flex justify-center items-center gap-4 py-2 border-b border-zinc-900/50 mb-2 bg-zinc-950/20 flex-shrink-0 overflow-x-auto no-scrollbar">
                     {players.map(p => (
                         <div key={p.id} className="w-16 flex-shrink-0 flex justify-center">
                             <Avatar 
@@ -302,7 +305,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
                                 isMain={p.username === user.username}
                                 isTyping={p.id === socket.id ? guess.length > 0 : typingPlayers[p.id]} 
                                 submitted={lastSubmiter?.username === p.username ? lastSubmiter.timestamp : 0}
-                                isMobile={p.isMobile}
+                                isMobile={true}
                                 isCompact={true} 
                             />
                         </div>
@@ -310,7 +313,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
                 </div>
 
                 {/* CENTER PROCESSING UNIT */}
-                <div ref={scrollRef} className="max-w-lg min-h-100 max-h-105 overflow-y-scroll custom-scrollbar flex flex-col gap-1 px-1 py-2 scroll-smooth">
+                <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col gap-1.5 px-1 py-2 scroll-smooth bg-zinc-950/10 rounded">
                     <AnimatePresence initial={false}>
                         {attempts.map((att) => (
                             <motion.div 
@@ -329,7 +332,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
                                         : "border-zinc-800"
                                 }`}
                             >
-                                <div className="flex justify-between text-[8px] uppercase tracking-widest mb-0.2 opacity-70">
+                                <div className="flex justify-between text-[7px] uppercase tracking-widest mb-0.5 opacity-70">
                                     <span className={att.player === "SYSTEM_DECODER" ? "text-blue-400 font-bold" : "text-zinc-500"}>
                                         {att.player === "SYSTEM_DECODER" ? "!!! SYSTEM_DECODER_HINT !!!" : `Source: ${att.player}`}
                                     </span>
@@ -338,12 +341,11 @@ const GameBoard = ({ socket, user, onLogout }) => {
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold tracking-widest text-white min-w-[80px] uppercase">
+                                    <span className="text-[11px] font-bold tracking-widest text-white uppercase min-w-[60px]">
                                         {att.word}
                                     </span>
-                                    <div className="flex-1 h-1 bg-zinc-950 border border-zinc-800 relative overflow-hidden">
+                                    <div className="flex-1 h-0.5 bg-zinc-950 border border-zinc-800 relative overflow-hidden">
                                         <motion.div 
-                                            layout
                                             initial={{ width: 0 }}
                                             animate={{ width: `${Math.max(5, 100 - (att.rank / 100))}%` }}
                                             className={`h-full ${att.rank <= 500 ? "bg-green-500" : "bg-zinc-700"}`}
@@ -354,13 +356,29 @@ const GameBoard = ({ socket, user, onLogout }) => {
                         ))}
                     </AnimatePresence>
                 </div>
+
+                {/* BLACK ARCHIVE */}
+                <div className="h-6 flex items-center justify-center px-4 flex-shrink-0 mt-1">
+                    <AnimatePresence mode="wait">
+                        {rejectedWord && (
+                            <motion.div 
+                                initial={{ y: 5, opacity: 0 }} 
+                                animate={{ y: 0, opacity: 1 }} 
+                                exit={{ y: -5, opacity: 0 }}
+                                className="text-red-500 font-bold text-[9px] tracking-widest uppercase"
+                            >
+                                {rejectedWord} REJECTED!
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
         ) : (
 
             /* --- DESKTOP LAYOUT --- */
             <>
             {/* HEADER */}
-            <div className="border-b border-zinc-900 pb-4 mb-6 flex justify-between items-end">
+            <div className="flex-shrink-0 border-b border-zinc-900 pb-4 mb-4 flex justify-between items-end h-20">
             
                 {/* LEFT: Room ID & Leave */}
                 <div className="flex flex-col gap-2">
@@ -436,9 +454,9 @@ const GameBoard = ({ socket, user, onLogout }) => {
             </div>
 
             {/* MAIN AREA */}
-            <div className="flex-1 flex justify-between items-center overflow-hidden px-40">                
+            <div className="flex-1 flex justify-between items-center overflow-hidden px-8 min-h-0">                
                 {/* LEFT SECTOR */}
-                <div className="w-32 space-y-12">
+                <div className="flex-shrink-0 w-32 space-y-12">
                     {leftSide.map(p => (
                         <Avatar 
                             key={p.id}
@@ -451,18 +469,19 @@ const GameBoard = ({ socket, user, onLogout }) => {
                 </div>
 
                 {/* CENTER PROCESSING UNIT */}
-                <div ref={scrollRef} className="flex-1 max-w-xl h-[450px] overflow-y-auto custom-scrollbar flex flex-col gap-3 px-4 py-2 scroll-smooth">
-                    <AnimatePresence initial={false}>
-                        {attempts.map((att) => (
-                            <motion.div 
-                                layout
-                                id={`attempt-${att.timestamp}`}
-                                key={att.timestamp}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                className={`bg-zinc-900/40 border p-1.5 font-mono relative transition-colors duration-500 ${
+                <div className="flex-1 flex justify-center h-full max-h-[50vh] px-4">
+                    <div ref={scrollRef} className="w-full max-w-xl overflow-y-auto custom-scrollbar flex flex-col gap-3 px-4 py-2 scroll-smooth">
+                        <AnimatePresence initial={false}>
+                            {attempts.map((att) => (
+                                <motion.div 
+                                    layout
+                                    id={`attempt-${att.timestamp}`}
+                                    key={att.timestamp}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                    className={`bg-zinc-900/40 border p-1.5 font-mono relative transition-colors duration-500 ${
                                     att.player === "SYSTEM_DECODER" 
                                     ? "border-blue-500/50 bg-blue-900/10 shadow-[0_0_15px_rgba(59,130,246,0.2)]" 
                                     : att.word === lastWord 
@@ -491,13 +510,14 @@ const GameBoard = ({ socket, user, onLogout }) => {
                                         />
                                     </div>
                                 </div>
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+                    </div>
                 </div>
 
                 {/* RIGHT SECTOR */}
-                <div className="w-32 space-y-12">
+                <div className=" flex-shrink-0 w-32 space-y-12">
                     {rightSide.map(p => (
                         <Avatar 
                             key={p.id}
@@ -508,11 +528,42 @@ const GameBoard = ({ socket, user, onLogout }) => {
                     ))}
                 </div>
             </div>
+
+            {/* BLACK ARCHIVE */}
+            <div className="relative mt-auto mx-auto w-full max-w-sm px-15 py-2">
+                <div className="flex gap-4 text-[8px] text-red-900/50 mb-2 tracking-[0.3em] uppercase border-b border-red-900/20 flex justify-between items-center">
+                    <span>Trash</span>
+
+                    <AnimatePresence mode="wait">
+                        {rejectedWord && (
+                            <motion.div 
+                                key={rejectedWord}
+                                initial={{ x: -10, opacity: 0 }} 
+                                animate={{ x: 0, opacity: 1 }} 
+                                exit={{ opacity: 0 }}
+                                className="text-red-500 font-bold text-[9px] tracking-tighter uppercase whitespace-nowrap"
+                            >
+                                {rejectedWord} !
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <div className="flex items-center gap-2">
+                        <div className="flex gap-1 opacity-30">
+                            {archive.slice(0, 3).map((_, i) => (
+                                <span key={i} className="w-1 h-1 bg-red-900 rounded-full"></span>
+                            ))}
+                        </div>
+                        <span className="animate-pulse">●</span>
+                    </div>
+                </div>
+            </div>
             </>
         )}
 
+
         {/* CONTROL DECK */}
-        <div className={`mt-4 w-full max-w-5xl mx-auto flex flex-col
+        <div className={`flex-shrink-0 mt-auto pt-2 w-full max-w-5xl mx-auto flex flex-col
             ${isMobileView ? 'items-center' : 'items-end pr-10'}`}
         >
             {!isMobileView && 
@@ -553,7 +604,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
                     onClick={handleShowTop}
                     className="border border-zinc-800 bg-zinc-950 px-4 hover:bg-zinc-900 transition-colors flex flex-col justify-center items-center gap-1 group"
                 >
-                    <span className="text-sm text-zinc-500 group-hover:text-white uppercase tracking-widest">Top ^</span>
+                    <span className="text-sm text-zinc-500 group-hover:text-white uppercase tracking-widest">{isMobileView ? "^" : "TOP ^"}</span>
                 </button>
             </div>
             
@@ -566,25 +617,6 @@ const GameBoard = ({ socket, user, onLogout }) => {
                 </div>
             )}
         </div>
-
-        {/* BLACK ARCHIVE (Hidden on mobile to save space) */}
-        {!isMobileView && (
-            <div className="absolute bottom-4 left-4 w-48 pointer-events-none">
-                <div className="text-[9px] text-red-900 mb-2 tracking-[0.3em] uppercase border-b border-red-900/30 flex justify-between">
-                    <span>System_Trash</span>
-                    <span className="animate-pulse">●</span>
-                </div>
-                <AnimatePresence>
-                    {rejectedWord && (
-                        <motion.div initial={{ y: -20, x: 20, opacity: 0 }} animate={{ y: 0, x: 0, opacity: 1 }} exit={{ opacity: 0 }}
-                            className="text-red-500 font-bold text-xs mb-2 tracking-widest uppercase">{rejectedWord} {'>>'} REJECTED</motion.div>
-                    )}
-                </AnimatePresence>
-                <div className="space-y-1 opacity-20">
-                    {archive.map((w, i) => <div key={i} className="text-[8px] text-zinc-500 line-through truncate uppercase">{w}</div>)}
-                </div>
-            </div>
-        )}
     </div>
   );
 };
