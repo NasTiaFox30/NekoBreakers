@@ -513,6 +513,40 @@ const GameBoard = ({ socket, user, onLogout }) => {
             </>
         )}
 
+
+        {/* BLACK ARCHIVE (Hidden on mobile to save space) */}
+        {!isMobileView && (
+            <div className="relative mt-auto mx-auto w-full max-w-sm px-15 py-2">
+                <div className="flex gap-4 text-[8px] text-red-900/50 mb-2 tracking-[0.3em] uppercase border-b border-red-900/20 flex justify-between items-center">
+                    <span>Trash</span>
+
+                    <AnimatePresence mode="wait">
+                        {rejectedWord && (
+                            <motion.div 
+                                key={rejectedWord}
+                                initial={{ x: -10, opacity: 0 }} 
+                                animate={{ x: 0, opacity: 1 }} 
+                                exit={{ opacity: 0 }}
+                                className="text-red-500 font-bold text-[9px] tracking-tighter uppercase whitespace-nowrap"
+                            >
+                                {rejectedWord} !
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <div className="flex items-center gap-2">
+                        <div className="flex gap-1 opacity-30">
+                            {archive.slice(0, 3).map((_, i) => (
+                                <span key={i} className="w-1 h-1 bg-red-900 rounded-full"></span>
+                            ))}
+                        </div>
+                        <span className="animate-pulse">●</span>
+                    </div>
+                </div>
+            </div>
+        )}
+
+
         {/* CONTROL DECK */}
         <div className={`flex-shrink-0 mt-auto pt-4 w-full max-w-5xl mx-auto flex flex-col
             ${isMobileView ? 'items-center' : 'items-end pr-10'}`}
@@ -568,25 +602,6 @@ const GameBoard = ({ socket, user, onLogout }) => {
                 </div>
             )}
         </div>
-
-        {/* BLACK ARCHIVE (Hidden on mobile to save space) */}
-        {!isMobileView && (
-            <div className="absolute bottom-4 left-4 w-48 pointer-events-none">
-                <div className="text-[9px] text-red-900 mb-2 tracking-[0.3em] uppercase border-b border-red-900/30 flex justify-between">
-                    <span>System_Trash</span>
-                    <span className="animate-pulse">●</span>
-                </div>
-                <AnimatePresence>
-                    {rejectedWord && (
-                        <motion.div initial={{ y: -20, x: 20, opacity: 0 }} animate={{ y: 0, x: 0, opacity: 1 }} exit={{ opacity: 0 }}
-                            className="text-red-500 font-bold text-xs mb-2 tracking-widest uppercase">{rejectedWord} {'>>'} REJECTED</motion.div>
-                    )}
-                </AnimatePresence>
-                <div className="space-y-1 opacity-20">
-                    {archive.map((w, i) => <div key={i} className="text-[8px] text-zinc-500 line-through truncate uppercase">{w}</div>)}
-                </div>
-            </div>
-        )}
     </div>
   );
 };
