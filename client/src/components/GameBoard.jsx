@@ -213,7 +213,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
   const rightSide = otherPlayers.slice(Math.ceil(otherPlayers.length / 2));
 
   return (
-    <div className="min-h-screen bg-black text-white font-mono flex flex-col p-4 md:p-6 overflow-hidden select-none">
+    <div className="h-screen w-full bg-black text-white font-mono flex flex-col p-4 md:p-6 overflow-hidden select-none">
         <AnimatePresence>
             {/* REVEAL OVERLAY (Win/Restart) */}
             {revealedWord && (
@@ -360,7 +360,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
             /* --- DESKTOP LAYOUT --- */
             <>
             {/* HEADER */}
-            <div className="border-b border-zinc-900 pb-4 mb-6 flex justify-between items-end">
+            <div className="flex-shrink-0 border-b border-zinc-900 pb-4 mb-4 flex justify-between items-end h-20">
             
                 {/* LEFT: Room ID & Leave */}
                 <div className="flex flex-col gap-2">
@@ -436,9 +436,9 @@ const GameBoard = ({ socket, user, onLogout }) => {
             </div>
 
             {/* MAIN AREA */}
-            <div className="flex-1 flex justify-between items-center overflow-hidden px-40">                
+            <div className="flex-1 flex justify-between items-center overflow-hidden px-8 min-h-0">                
                 {/* LEFT SECTOR */}
-                <div className="w-32 space-y-12">
+                <div className="flex-shrink-0 w-32 space-y-12">
                     {leftSide.map(p => (
                         <Avatar 
                             key={p.id}
@@ -451,18 +451,19 @@ const GameBoard = ({ socket, user, onLogout }) => {
                 </div>
 
                 {/* CENTER PROCESSING UNIT */}
-                <div ref={scrollRef} className="flex-1 max-w-xl h-[450px] overflow-y-auto custom-scrollbar flex flex-col gap-3 px-4 py-2 scroll-smooth">
-                    <AnimatePresence initial={false}>
-                        {attempts.map((att) => (
-                            <motion.div 
-                                layout
-                                id={`attempt-${att.timestamp}`}
-                                key={att.timestamp}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                className={`bg-zinc-900/40 border p-1.5 font-mono relative transition-colors duration-500 ${
+                <div className="flex-1 flex justify-center h-full max-h-[50vh] px-4">
+                    <div ref={scrollRef} className="w-full max-w-xl overflow-y-auto custom-scrollbar flex flex-col gap-3 px-4 py-2 scroll-smooth">
+                        <AnimatePresence initial={false}>
+                            {attempts.map((att) => (
+                                <motion.div 
+                                    layout
+                                    id={`attempt-${att.timestamp}`}
+                                    key={att.timestamp}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                    className={`bg-zinc-900/40 border p-1.5 font-mono relative transition-colors duration-500 ${
                                     att.player === "SYSTEM_DECODER" 
                                     ? "border-blue-500/50 bg-blue-900/10 shadow-[0_0_15px_rgba(59,130,246,0.2)]" 
                                     : att.word === lastWord 
@@ -491,13 +492,14 @@ const GameBoard = ({ socket, user, onLogout }) => {
                                         />
                                     </div>
                                 </div>
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+                    </div>
                 </div>
 
                 {/* RIGHT SECTOR */}
-                <div className="w-32 space-y-12">
+                <div className=" flex-shrink-0 w-32 space-y-12">
                     {rightSide.map(p => (
                         <Avatar 
                             key={p.id}
@@ -512,7 +514,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
         )}
 
         {/* CONTROL DECK */}
-        <div className={`mt-4 w-full max-w-5xl mx-auto flex flex-col
+        <div className={`flex-shrink-0 mt-auto pt-4 w-full max-w-5xl mx-auto flex flex-col
             ${isMobileView ? 'items-center' : 'items-end pr-10'}`}
         >
             {!isMobileView && 
