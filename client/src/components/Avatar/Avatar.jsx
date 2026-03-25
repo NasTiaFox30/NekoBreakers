@@ -27,7 +27,7 @@ const Avatar = ({ isTyping, isMain, submitted, username, isMobile, isCompact }) 
   }, []);
 
   return (
-    <div className={`flex flex-col items-center transition-all duration-500 ${isCompact ? 'relative scale-100' : 'absolute bottom-22 scale-120'}`}>
+    <div className={`flex flex-col items-center transition-all duration-500 ${isCompact ? 'relative scale-100' : (isMain ? 'absolute bottom-22 scale-120' : 'scale-95')}`}>
       {/* Голова */}
       <div className={`${isCompact ? 'w-12 h-12' : 'w-32 h-32'} transition-all`}>
           <Head 
