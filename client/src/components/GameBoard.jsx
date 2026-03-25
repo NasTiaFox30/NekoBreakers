@@ -279,22 +279,25 @@ const GameBoard = ({ socket, user, onLogout }) => {
 
         {isMobileView ? (
             /* --- MOBILE LAYOUT --- */
-
-            <div className="flex flex-col">
-                {/* Спрощений хедер */}
-                <div className="flex justify-between items-center mb-2 text-[9px] text-zinc-500 uppercase tracking-widest">
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                
+                {/* HEADER */}
+                <div className="flex justify-between items-center mb-2 text-[9px] text-zinc-500 uppercase tracking-widest flex-shrink-0">
                     <button 
                         onClick={handleLeave}
-                        className="text-[9px] border border-zinc-800 px-2 py-1 text-zinc-600 hover:text-red-500 hover:border-red-900 transition-colors uppercase tracking-widest text-left w-fit"
-                        >
-                            [ Leave ]
+                        className="text-[9px] border border-zinc-800 px-2 py-1 text-zinc-600 active:text-red-500 transition-colors uppercase tracking-widest text-left"
+                    >
+                        [ Leave ]
                     </button>
-                    <span>ID: {user.roomId}</span>                    
+                    <div className="flex flex-col items-center">
+                        <span className="text-white text-[10px] tracking-widest">{user.roomId}</span>
+                        <span className="text-[7px] opacity-50">Session Code</span>
+                    </div>
                     <span>{players.length}/3 Hackers</span>
                 </div>
 
                 {/* ГОРИЗОНТАЛЬНА ПАНЕЛЬ ГРАВЦІВ */}
-                <div className="flex justify-center items-center gap-4 py-2 border-b border-zinc-900/50 mb-2 bg-zinc-950/20 flex-shrink-0">
+                <div className="flex justify-center items-center gap-4 py-2 border-b border-zinc-900/50 mb-2 bg-zinc-950/20 flex-shrink-0 overflow-x-auto no-scrollbar">
                     {players.map(p => (
                         <div key={p.id} className="w-16 flex-shrink-0 flex justify-center">
                             <Avatar 
@@ -302,7 +305,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
                                 isMain={p.username === user.username}
                                 isTyping={p.id === socket.id ? guess.length > 0 : typingPlayers[p.id]} 
                                 submitted={lastSubmiter?.username === p.username ? lastSubmiter.timestamp : 0}
-                                isMobile={p.isMobile}
+                                isMobile={true}
                                 isCompact={true} 
                             />
                         </div>
@@ -310,7 +313,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
                 </div>
 
                 {/* CENTER PROCESSING UNIT */}
-                <div ref={scrollRef} className="max-w-lg min-h-100 max-h-105 overflow-y-scroll custom-scrollbar flex flex-col gap-1 px-1 py-2 scroll-smooth">
+                <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col gap-1.5 px-1 py-2 scroll-smooth bg-zinc-950/10 rounded">
                     <AnimatePresence initial={false}>
                         {attempts.map((att) => (
                             <motion.div 
@@ -329,7 +332,7 @@ const GameBoard = ({ socket, user, onLogout }) => {
                                         : "border-zinc-800"
                                 }`}
                             >
-                                <div className="flex justify-between text-[8px] uppercase tracking-widest mb-0.2 opacity-70">
+                                <div className="flex justify-between text-[7px] uppercase tracking-widest mb-0.5 opacity-70">
                                     <span className={att.player === "SYSTEM_DECODER" ? "text-blue-400 font-bold" : "text-zinc-500"}>
                                         {att.player === "SYSTEM_DECODER" ? "!!! SYSTEM_DECODER_HINT !!!" : `Source: ${att.player}`}
                                     </span>
@@ -338,12 +341,11 @@ const GameBoard = ({ socket, user, onLogout }) => {
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold tracking-widest text-white min-w-[80px] uppercase">
+                                    <span className="text-[11px] font-bold tracking-widest text-white uppercase min-w-[60px]">
                                         {att.word}
                                     </span>
-                                    <div className="flex-1 h-1 bg-zinc-950 border border-zinc-800 relative overflow-hidden">
+                                    <div className="flex-1 h-0.5 bg-zinc-950 border border-zinc-800 relative overflow-hidden">
                                         <motion.div 
-                                            layout
                                             initial={{ width: 0 }}
                                             animate={{ width: `${Math.max(5, 100 - (att.rank / 100))}%` }}
                                             className={`h-full ${att.rank <= 500 ? "bg-green-500" : "bg-zinc-700"}`}
