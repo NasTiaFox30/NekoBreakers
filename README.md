@@ -11,14 +11,14 @@ NekoBreakers is a competitive/cooperative multiplayer word-guessing game with a 
 
 ## Tech Stack:
 Frontend:
-    - React.JS, Tailwind CSS, Framer Motion
+- React.JS, Tailwind CSS, Framer Motion
 Orchestrator:
-    - Node.js, Express, Socket.io
+- Node.js, Express, Socket.io
 Intelligence Core:
-    - Python 3.12+, FastAPI, NLP (Word2Vec / Transformers)
-    - (NLP) - https://lang.org.ua/uk/models/
+- Python 3.12+, FastAPI, NLP (Word2Vec / Transformers)
+- (NLP) - https://lang.org.ua/uk/models/
 Automation:
-    - Pytest, Selenium WebDriver
+- Pytest, Selenium WebDriver
 
 
 ## Automated Testing:
