@@ -22,6 +22,7 @@ Intelligence Core:
 
 Automation:
 - Pytest, Selenium WebDriver
+- Pytest, Selenium WebDriver
 
 
 ## Automated Testing:
